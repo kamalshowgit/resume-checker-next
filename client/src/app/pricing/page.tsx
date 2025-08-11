@@ -8,56 +8,39 @@ import { FiCheck, FiStar } from "react-icons/fi";
 export default function PricingPage() {
   const pricingPlans = [
     {
-      name: "Free",
-      price: "$0",
-      period: "forever",
-      description: "Perfect for getting started with resume analysis",
+      name: "Free Trial",
+      price: "₹0",
+      period: "first analysis",
+      description: "Try our AI-powered resume analysis completely free",
       features: [
-        "Basic resume analysis",
-        "ATS scoring",
-        "3 resume uploads per month",
-        "Basic suggestions",
-        "Email support"
+        "1 free resume analysis",
+        "ATS scoring and feedback",
+        "Section-by-section breakdown",
+        "AI-powered suggestions",
+        "Basic improvement tips"
       ],
       popular: false,
-      cta: "Get Started Free",
+      cta: "Start Free Analysis",
       ctaVariant: "outline"
     },
     {
-      name: "Pro",
-      price: "$19",
-      period: "per month",
-      description: "Advanced features for serious job seekers",
+      name: "Premium Analysis",
+      price: "₹49",
+      period: "per analysis",
+      description: "Unlock unlimited resume analyses with advanced features",
       features: [
-        "Everything in Free",
         "Unlimited resume uploads",
         "Advanced AI analysis",
-        "Section-by-section scoring",
-        "Detailed improvement suggestions",
+        "Detailed section scoring",
+        "Comprehensive improvement suggestions",
+        "Job profile matching",
+        "Content optimization tips",
         "Priority support",
         "Export optimized resume"
       ],
       popular: true,
-      cta: "Start Pro Trial",
+      cta: "Get Premium Access",
       ctaVariant: "default"
-    },
-    {
-      name: "Enterprise",
-      price: "$99",
-      period: "per month",
-      description: "For HR teams and career counselors",
-      features: [
-        "Everything in Pro",
-        "Team management",
-        "Bulk resume analysis",
-        "Custom scoring criteria",
-        "API access",
-        "Dedicated support",
-        "White-label options"
-      ],
-      popular: false,
-      cta: "Contact Sales",
-      ctaVariant: "outline"
     }
   ];
 
@@ -65,28 +48,21 @@ export default function PricingPage() {
     "@context": "https://schema.org",
     "@type": "PriceSpecification",
     "name": "ResumeCheck Pricing Plans",
-    "description": "Choose the perfect plan for your resume optimization needs",
+    "description": "Start with a free resume analysis, then pay ₹49 for additional analyses",
     "offers": [
       {
         "@type": "Offer",
-        "name": "Free Plan",
+        "name": "Free Trial",
         "price": "0",
-        "priceCurrency": "USD",
-        "description": "Basic resume analysis with ATS scoring"
+        "priceCurrency": "INR",
+        "description": "First resume analysis completely free"
       },
       {
         "@type": "Offer",
-        "name": "Pro Plan",
-        "price": "19",
-        "priceCurrency": "USD",
-        "description": "Advanced AI analysis with unlimited uploads"
-      },
-      {
-        "@type": "Offer",
-        "name": "Enterprise Plan",
-        "price": "99",
-        "priceCurrency": "USD",
-        "description": "Team management and bulk analysis"
+        "name": "Premium Analysis",
+        "price": "49",
+        "priceCurrency": "INR",
+        "description": "₹49 per additional resume analysis"
       }
     ]
   };
@@ -121,7 +97,7 @@ export default function PricingPage() {
                 Simple, Transparent Pricing
               </h1>
               <p className="mt-6 text-xl text-gray-600 dark:text-gray-400">
-                Choose the plan that fits your career goals. Start free and upgrade when you&apos;re ready.
+                Start with a free analysis, then pay only ₹49 for each additional resume optimization.
               </p>
             </div>
           </div>
@@ -203,19 +179,19 @@ export default function PricingPage() {
               <div className="space-y-8">
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                    Can I cancel my subscription anytime?
+                    How does the pricing work?
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Yes, you can cancel your subscription at any time. You&apos;ll continue to have access to your plan until the end of your billing period.
+                    Your first resume analysis is completely free. After that, each additional analysis costs ₹49. There are no monthly subscriptions or hidden fees.
                   </p>
                 </div>
                 
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                    Is there a free trial for paid plans?
+                    What's included in the free analysis?
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Yes, we offer a 7-day free trial for our Pro plan. No credit card required to start your trial.
+                    The free analysis includes ATS scoring, section-by-section breakdown, AI-powered suggestions, and basic improvement tips for one resume.
                   </p>
                 </div>
                 
@@ -224,16 +200,16 @@ export default function PricingPage() {
                     What payment methods do you accept?
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    We accept all major credit cards, PayPal, and Apple Pay. All payments are processed securely through Stripe.
+                    We accept all major credit cards, UPI, net banking, and digital wallets. All payments are processed securely through Razorpay.
                   </p>
                 </div>
                 
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                    Do you offer refunds?
+                    Can I analyze multiple resumes?
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    We offer a 30-day money-back guarantee. If you&apos;re not satisfied with our service, contact us for a full refund.
+                    Yes! After your free analysis, you can analyze as many resumes as you want for ₹49 each. Perfect for job seekers applying to multiple positions.
                   </p>
                 </div>
               </div>

@@ -438,15 +438,19 @@ export async function calculateATSScore(text: string): Promise<{
   const model = process.env.AI_MODEL_RESUME || process.env.AI_MODEL || config.defaultModel;
   const { base, key } = config;
 
-  console.log(`[ATS Score] Using provider: ${provider}, model: ${model}`);
+  console.log(`[ATS Score] Starting analysis with provider: ${provider}, model: ${model}`);
+  console.log(`[ATS Score] Base URL: ${base}`);
+  console.log(`[ATS Score] API key present: ${!!key}`);
 
-  if (!key) {
+  if (!key || key === 'your_groq_api_key_here' || key === 'your_actual_groq_api_key_here') {
+    console.error('[ATS Score] No valid API key configured');
     throw new Error('No valid API key configured for AI service. Please set GROQ_API_KEY in your environment variables.');
   }
 
   try {
     // Detect which sections actually exist in the resume
     const sections = detectResumeSections(text);
+    console.log(`[ATS Score] Detected sections:`, sections);
     
     const prompt = `Analyze this resume comprehensively for ATS optimization and provide detailed insights.
 
@@ -518,21 +522,39 @@ IMPORTANT:
       max_tokens: 1500 // Increased for comprehensive response
     };
 
+    console.log(`[ATS Score] Sending request to ${base}/chat/completions`);
+    console.log(`[ATS Score] Request payload:`, { model, temperature: requestBody.temperature, max_tokens: requestBody.max_tokens });
+
     const resp = await fetch(`${base}/chat/completions`, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     });
 
+    console.log(`[ATS Score] Response status: ${resp.status}`);
+
     if (!resp.ok) {
       if (resp.status === 429) {
+        console.error('[ATS Score] Rate limit reached');
         throw new Error('AI service rate limit reached. Please try again later.');
       }
-      console.error(`[ATS Score] API Error: ${resp.status}`);
-      throw new Error(`AI service error: ${resp.status}`);
+      if (resp.status === 401) {
+        console.error('[ATS Score] Authentication failed - check API key');
+        throw new Error('AI service authentication failed. Please check your API key configuration.');
+      }
+      if (resp.status === 400) {
+        console.error('[ATS Score] Bad request - check model name and parameters');
+        throw new Error('AI service configuration error. Please check model settings.');
+      }
+      
+      const errorText = await resp.text();
+      console.error(`[ATS Score] API Error ${resp.status}: ${errorText}`);
+      throw new Error(`AI service error: ${resp.status} - ${errorText}`);
     }
 
     const data: any = await resp.json();
+    console.log(`[ATS Score] Response received, choices: ${data?.choices?.length || 0}`);
+    
     const content = data?.choices?.[0]?.message?.content;
     
     if (content) {
@@ -546,6 +568,8 @@ IMPORTANT:
           .replace(/\s+/g, ' ') // Normalize whitespace
           .trim();
         
+        console.log(`[ATS Score] Content cleaned, length: ${cleanedContent.length}`);
+        
         // Extract JSON from response
         const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -558,18 +582,42 @@ IMPORTANT:
               result.jobProfiles = [];
             }
             
+            // Validate score range
+            if (result.score < 0 || result.score > 100) {
+              console.warn(`[ATS Score] Score out of range: ${result.score}, clamping to 0-100`);
+              result.score = Math.max(0, Math.min(100, result.score));
+            }
+            
+            // Validate breakdown scores
+            Object.keys(result.breakdown).forEach(key => {
+              if (typeof result.breakdown[key] === 'number' && (result.breakdown[key] < 0 || result.breakdown[key] > 100)) {
+                console.warn(`[ATS Score] Breakdown score out of range for ${key}: ${result.breakdown[key]}, clamping to 0-100`);
+                result.breakdown[key] = Math.max(0, Math.min(100, result.breakdown[key]));
+              }
+            });
+            
             console.log('[ATS Score] AI analysis completed successfully');
+            console.log(`[ATS Score] Final score: ${result.score}`);
+            console.log(`[ATS Score] Suggestions count: ${result.suggestions.length}`);
+            console.log(`[ATS Score] Job profiles count: ${result.jobProfiles.length}`);
+            
             return result;
           } else {
+            console.error('[ATS Score] Invalid result structure:', result);
             throw new Error('AI service returned invalid result structure. Please try again.');
           }
+        } else {
+          console.error('[ATS Score] No JSON found in response');
+          throw new Error('AI service returned no valid JSON. Please try again.');
         }
       } catch (parseError) {
         console.error('[ATS Score] Failed to parse AI response:', parseError);
+        console.error('[ATS Score] Raw content:', content);
         throw new Error('AI service returned unparseable response. Please try again.');
       }
     }
     
+    console.error('[ATS Score] No content in response');
     throw new Error('AI service returned no content. Please try again.');
   } catch (error) {
     console.error('[ATS Score] Error:', error);
@@ -833,6 +881,7 @@ function calculateFallbackATSScore(text: string) {
   
   // Detect which sections actually exist in the resume
   const sections = detectResumeSections(text);
+  console.log('[FallbackATS] Detected sections:', sections);
   
   let score = 50; // Start with neutral score
   const breakdown = { 
@@ -853,6 +902,8 @@ function calculateFallbackATSScore(text: string) {
   const lines = text.split('\n').filter(line => line.trim().length > 0);
   const wordCount = text.split(/\s+/).length;
 
+  console.log(`[FallbackATS] Text analysis: ${lines.length} lines, ${wordCount} words`);
+
   // Check for keywords (industry-specific terms)
   const technicalKeywords = [
     'python', 'react', 'javascript', 'typescript', 'node.js', 'java', 'c++', 'c#',
@@ -865,6 +916,8 @@ function calculateFallbackATSScore(text: string) {
   
   const keywordMatches = technicalKeywords.filter(keyword => lowerText.includes(keyword)).length;
   breakdown.keywords = Math.min(50 + keywordMatches * 3, 100);
+  
+  console.log(`[FallbackATS] Keyword matches: ${keywordMatches}, score: ${breakdown.keywords}`);
   
   if (keywordMatches < 5) {
     suggestions.push({
@@ -892,6 +945,8 @@ function calculateFallbackATSScore(text: string) {
         impact: 9
       });
     }
+    
+    console.log(`[FallbackATS] Achievements: ${metricCount} metrics, score: ${breakdown.achievements}`);
   }
 
   // Check for strong action verbs and leadership language (only if section exists)
@@ -913,6 +968,8 @@ function calculateFallbackATSScore(text: string) {
         impact: 7
       });
     }
+    
+    console.log(`[FallbackATS] Experience: ${verbMatches} action verbs, score: ${breakdown.experience}`);
   }
 
   // Check formatting and structure
@@ -933,6 +990,8 @@ function calculateFallbackATSScore(text: string) {
       impact: 6
     });
   }
+  
+  console.log(`[FallbackATS] Formatting: ${bullets} bullets, ${hasSections} sections, ${hasContactInfo} contact, score: ${breakdown.formatting}`);
 
   // Check for skills section and technical depth (only if section exists)
   if (sections.hasSkills) {
@@ -953,6 +1012,8 @@ function calculateFallbackATSScore(text: string) {
         impact: 7
       });
     }
+    
+    console.log(`[FallbackATS] Skills: ${technicalDepth} technical terms, score: ${breakdown.skills}`);
   }
 
   // Calculate overall score with weighted components
@@ -996,6 +1057,8 @@ function calculateFallbackATSScore(text: string) {
   }
 
   console.log(`[FallbackATS] Calculated score: ${score}, Breakdown:`, breakdown);
+  console.log(`[FallbackATS] Generated ${suggestions.length} suggestions`);
+  
   return { 
     score, 
     breakdown, 
