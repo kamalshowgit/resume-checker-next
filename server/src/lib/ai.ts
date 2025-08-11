@@ -253,7 +253,14 @@ export async function searchJobs(text: string): Promise<{ title: string; url: st
 
 export async function chatSuggest(
   history: ChatTurn[],
-  message: string
+  message: string,
+  context?: {
+    resumeData?: any;
+    currentScore?: number;
+    keyPoints?: string[];
+    recentActions?: any[];
+    userSession?: any;
+  }
 ): Promise<string> {
   // Default to Groq for all AI functions
   const provider = process.env.AI_PROVIDER_CHAT || process.env.AI_PROVIDER || 'groq';
@@ -273,25 +280,51 @@ export async function chatSuggest(
       messages: [
         { 
           role: 'system', 
-          content: `You are "Coach" - a professional career coach and resume expert. Respond like a helpful teacher:
+          content: `You are "Coach" - a friendly, conversational career coach who happens to have access to the user's resume data. 
 
-• Keep responses short and actionable (max 3-4 points)
-• Use bullet points for clarity
-• Be encouraging but direct
-• Focus on specific, practical advice
-• Speak professionally but warmly
-• Avoid long paragraphs - use concise points instead
-• If asked about resume content, provide specific suggestions
-• If asked about scoring, explain what the scores mean and how to improve them
+IMPORTANT: Respond like a real human having a casual conversation, NOT like a formal report or analysis document.
 
-Examples of good responses:
-• Use action verbs like "Led," "Built," "Improved"
-• Add specific metrics (increased sales by 25%)
-• Tailor keywords to job descriptions
-• Keep resume to 1-2 pages maximum` 
+RESUME CONTEXT (use naturally when relevant):
+${context?.resumeData ? `
+I can see your resume "${context.resumeData.filename || 'resume'}" with an ATS score of ${context.currentScore || 0}%. I've identified ${context.keyPoints?.length || 0} key points from your experience.
+` : 'No resume uploaded yet - I can help with general career advice!'}
+
+CONVERSATION STYLE:
+• Talk like a friendly mentor, not a robot
+• Use natural language and casual expressions
+• Be encouraging and supportive
+• Ask follow-up questions to keep the conversation flowing
+• Share personal insights and experiences when relevant
+• Use "you" and "your" to make it personal
+• Keep it conversational, not formal
+
+WHEN DISCUSSING RESUME:
+• Naturally weave in details from their actual resume
+• Reference specific experiences they've mentioned
+• Give personalized advice based on their background
+• Don't make it sound like a report - make it sound like advice from a friend
+
+EXAMPLES OF GOOD RESPONSES:
+• "Hey! Looking at your experience with [specific skill from resume], I think you'd be great for..."
+• "I noticed in your resume that you [specific achievement] - that's really impressive!"
+• "Based on what I see in your background, here's what I'd suggest..."
+• "You know, with your experience in [field], you might want to consider..."
+
+AVOID:
+• Formal report language
+• Bullet-point lists unless specifically asked
+• Technical jargon unless the user uses it first
+• Structured sections like "Analysis" or "Recommendations"
+
+Just be yourself - helpful, friendly, and naturally knowledgeable about their situation!` 
         },
         ...history.map(h => ({ role: h.role, content: h.content })),
-        { role: 'user', content: message }
+        { 
+          role: 'user', 
+          content: context?.resumeData?.text ? 
+            `User Question: "${message}"\n\nResume Content Context:\n${context.resumeData.text.substring(0, 500)}...` : 
+            message 
+        }
       ],
       temperature: 0.2, // Lower temperature for more consistent responses
       max_tokens: 300
@@ -393,6 +426,11 @@ export async function calculateATSScore(text: string): Promise<{
     suggestion: string;
     impact: number;
   }>;
+  jobProfiles: Array<{
+    title: string;
+    matchScore: number;
+    reasoning: string;
+  }>;
 }> {
   // Default to Groq for all AI functions
   const provider = process.env.AI_PROVIDER_RESUME || process.env.AI_PROVIDER || 'groq';
@@ -410,7 +448,7 @@ export async function calculateATSScore(text: string): Promise<{
     // Detect which sections actually exist in the resume
     const sections = detectResumeSections(text);
     
-    const prompt = `Analyze this resume for ATS (Applicant Tracking System) optimization and provide a detailed score breakdown.
+    const prompt = `Analyze this resume comprehensively for ATS optimization and provide detailed insights.
 
 Resume Text:
 ${text}
@@ -427,10 +465,12 @@ IMPORTANT: Only score sections that actually exist in the resume. Based on my an
 - Projects: ${sections.hasProjects ? 'YES' : 'NO'}
 - Volunteer Work: ${sections.hasVolunteerWork ? 'YES' : 'NO'}
 
-Provide a JSON response with:
+Provide a comprehensive JSON response with:
+
 1. Overall ATS score (0-100)
 2. Breakdown scores for ALL sections (keywords, formatting, experience, skills, achievements, contactInfo, certifications, languages, projects, volunteerWork) - use 0 for non-existent sections
 3. Up to 5 specific suggestions with category, issue, suggestion, and impact score (1-10)
+4. Top 3-5 job profiles this resume matches best, with match scores and reasoning
 
 Response format:
 {
@@ -454,19 +494,28 @@ Response format:
       "suggestion": "Add keywords like 'Agile', 'CI/CD', 'Cloud Computing'",
       "impact": 8
     }
+  ],
+  "jobProfiles": [
+    {
+      "title": "Senior Software Engineer",
+      "matchScore": 85,
+      "reasoning": "Strong technical skills, relevant experience, good project portfolio"
+    }
   ]
 }
 
 IMPORTANT: 
 - Ensure the response is valid JSON without any control characters or formatting issues
 - Only score sections that actually exist in the resume (use 0 for missing sections)
-- Base your scoring on the actual content present, not assumptions`;
+- Base your scoring on the actual content present, not assumptions
+- Provide realistic job profile matches based on skills and experience
+- Use specific job titles that match the candidate's background`;
 
     const requestBody = {
       model,
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.1, // Lower temperature for more consistent results
-      max_tokens: 1000
+      max_tokens: 1500 // Increased for comprehensive response
     };
 
     const resp = await fetch(`${base}/chat/completions`, {
@@ -504,6 +553,11 @@ IMPORTANT:
           
           // Validate the result structure
           if (result.score && result.breakdown && result.suggestions) {
+            // Ensure jobProfiles exists, if not create empty array
+            if (!result.jobProfiles) {
+              result.jobProfiles = [];
+            }
+            
             console.log('[ATS Score] AI analysis completed successfully');
             return result;
           } else {

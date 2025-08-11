@@ -34,6 +34,11 @@ interface ResumeAnalysisProps {
     improvedContent?: {
       [key: string]: string;
     };
+    jobProfiles?: Array<{
+      title: string;
+      matchScore: number;
+      reasoning: string;
+    }>;
   };
   resumeText: string;
   onContentUpdate?: (updatedText: string) => void;
@@ -372,7 +377,7 @@ Generated on: ${new Date().toLocaleString()}
                 }, 100); // Wait for tab to render
               }}
             >
-              Edit Resume Content
+              Resume Content Review and Suggestions
             </button>
             <button
               className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus:ring-offset-gray-900"
@@ -405,7 +410,7 @@ Generated on: ${new Date().toLocaleString()}
               }`}
               onClick={() => setActiveTab("content")}
             >
-              Resume Content & Editing
+              Review Resume Content
             </button>
           </div>
         </div>
@@ -495,7 +500,7 @@ Generated on: ${new Date().toLocaleString()}
                               className="mt-2 text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 font-medium flex items-center"
                               onClick={() => setActiveTab("content")}
                             >
-                              Improve Now <span className="ml-1">→</span>
+                              Review Content <span className="ml-1">→</span>
                             </button>
                           </div>
                         </li>
@@ -511,7 +516,7 @@ Generated on: ${new Date().toLocaleString()}
                       className="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                       onClick={() => setActiveTab("content")}
                     >
-                      Apply All Improvements
+                      Review All Suggestions
                     </button>
                     <button
                       className="inline-flex w-full items-center justify-center rounded-md bg-green-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
@@ -526,151 +531,167 @@ Generated on: ${new Date().toLocaleString()}
                   </div>
                 </div>
               </div>
+              
+              {/* Job Profile Matches */}
+              {analysisResults.jobProfiles && analysisResults.jobProfiles.length > 0 && (
+                <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                  <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Recommended Job Profiles</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {analysisResults.jobProfiles.map((profile, index) => (
+                      <div key={index} className="rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{profile.title}</h4>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            profile.matchScore >= 80
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              : profile.matchScore >= 60
+                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          }`}>
+                            {profile.matchScore}% Match
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{profile.reasoning}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-100 dark:border-blue-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full">
-                      <FiInfo className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                      Hover over each line to see AI-powered suggestions. Click on a suggestion to apply it instantly.
+              {/* Header Info */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 border border-blue-100 dark:border-blue-800">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="bg-blue-100 dark:bg-blue-800 p-3 rounded-full">
+                    <FiInfo className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300">AI-Powered Resume Review</h3>
+                    <p className="text-blue-700 dark:text-blue-400">
+                      Your resume has been analyzed by AI. Below you'll find detailed suggestions for each section with explanations of why these improvements matter.
                     </p>
                   </div>
-                  <div className="flex items-center space-x-3 text-xs text-gray-500">
-                    <div className="flex items-center space-x-1.5">
-                      <div className="h-3 w-3 rounded-full bg-yellow-400"></div>
-                      <span className="font-medium">Grammar</span>
-                    </div>
-                    <div className="flex items-center space-x-1.5">
-                      <div className="h-3 w-3 rounded-full bg-blue-400"></div>
-                      <span className="font-medium">Content</span>
-                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="h-3 w-3 rounded-full bg-yellow-400"></div>
+                    <span className="font-medium text-blue-800 dark:text-blue-300">Content Suggestions</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-3 w-3 rounded-full bg-green-400"></div>
+                    <span className="font-medium text-blue-800 dark:text-blue-300">AI Improvements</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-3 w-3 rounded-full bg-blue-400"></div>
+                    <span className="font-medium text-blue-800 dark:text-blue-300">Section Analysis</span>
                   </div>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-                  <div className="bg-gray-100 dark:bg-gray-800 px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h3 className="font-medium text-gray-900 dark:text-white">Resume Content</h3>
-                    <div className="flex space-x-2">
-                      <button className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors font-medium">
-                        Apply All Suggestions
-                      </button>
-                    </div>
+                {/* Resume Content with Suggestions */}
+                <div className="rounded-lg border border-gray-200 shadow-sm dark:border-gray-800 overflow-hidden">
+                  <div className="bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-lg">Resume Content Analysis</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      AI-powered suggestions for each line with detailed explanations
+                    </p>
                   </div>
-                  <div className="max-h-[500px] overflow-y-auto p-5 font-mono text-sm bg-gray-50 dark:bg-gray-900">
-                    {/* Display original formatted content with AI suggestions highlighted */}
-                    <div className="space-y-4">
+                  <div className="max-h-[800px] overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
+                    <div className="space-y-6">
                       {resumeLines.map((line, index) => {
                         const suggestions = getSuggestionForLine(index, line);
                         const hasImprovements = hasImprovement(index);
                         
                         return (
-                          <div key={index} className="group relative">
-                            {/* Original text with highlighting */}
-                            <div
-                              className={`whitespace-pre-wrap py-3 px-4 rounded-lg border transition-all ${
-                                hasImprovements
-                                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700'
-                                  : suggestions
-                                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
-                                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                              }`}
-                              onMouseEnter={() => setHoveredLine(index)}
-                              onMouseLeave={() => setHoveredLine(null)}
-                            >
-                              {/* Line number and content */}
-                              <div className="flex items-start justify-between mb-2">
-                                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                                  Line {index + 1}
-                                </span>
-                                {hasImprovements && (
-                                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                    ✨ AI Improved
+                          <div key={index} className="group">
+                            {/* Content Card */}
+                            <div className={`rounded-lg border-2 transition-all duration-200 ${
+                              hasImprovements
+                                ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-700'
+                                : suggestions
+                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-700'
+                                : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}>
+                              
+                              {/* Header with line number and status */}
+                              <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+                                <div className="flex items-center space-x-3">
+                                  <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-full">
+                                    {index + 1}
                                   </span>
-                                )}
-                                {suggestions && !hasImprovements && (
-                                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    💡 Suggestions Available
-                                  </span>
-                                )}
+                                  {hasImprovements && (
+                                    <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                      AI Enhanced
+                                    </span>
+                                  )}
+                                  {suggestions && !hasImprovements && (
+                                    <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                      Suggestions Available
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                               
-                              {/* Original text */}
-                              <div className="text-gray-900 dark:text-gray-200 font-mono leading-relaxed">
-                                {line || "\u00A0"}
+                              {/* Original Content */}
+                              <div className="p-4">
+                                <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                                  Original Content
+                                </h4>
+                                <div className="text-gray-900 dark:text-white font-medium leading-relaxed">
+                                  {line}
+                                </div>
                               </div>
                               
-                              {/* AI Suggestions display */}
+                              {/* AI Suggestions */}
                               {suggestions && (
-                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                      AI Suggestions:
-                                    </h5>
-                                    <button
-                                      onClick={() => handleLineClick(index, suggestions)}
-                                      className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors font-medium opacity-0 group-hover:opacity-100"
-                                    >
-                                      Apply Best
-                                    </button>
+                                <div className="px-4 pb-4">
+                                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                                    <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center">
+                                      AI Suggestions & Why They Matter
+                                    </h4>
+                                    <div className="space-y-3">
+                                      {suggestions.map((suggestion, suggestionIndex) => (
+                                        <div key={suggestionIndex} className="rounded-lg p-3">
+                                          <div className="flex items-start space-x-2">
+                                            <span className="text-blue-500 dark:text-blue-400 text-lg">•</span>
+                                            <div>
+                                              <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
+                                                {suggestion}
+                                              </p>
+                                              <p className="text-xs text-blue-700 dark:text-blue-400">
+                                                This improvement will enhance clarity, professionalism, and ATS compatibility.
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                  <ul className="space-y-2">
-                                    {suggestions.map((suggestion, idx) => (
-                                      <li key={idx} className="flex items-start space-x-2 bg-white dark:bg-gray-700 p-2 rounded border border-gray-100 dark:border-gray-600">
-                                        <div className="mt-1.5 h-2 w-2 rounded-full bg-blue-400 flex-shrink-0"></div>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">{suggestion}</p>
-                                      </li>
-                                    ))}
-                                  </ul>
                                 </div>
                               )}
                               
-                              {/* Edit button */}
-                              <div className="mt-3 flex justify-end">
-                                <button
-                                  onClick={() => {
-                                    setEditingLine(index);
-                                    setEditContent(line);
-                                  }}
-                                  className="text-xs bg-gray-600 text-white px-3 py-1.5 rounded-md hover:bg-gray-700 transition-colors font-medium opacity-0 group-hover:opacity-100"
-                                >
-                                  Edit Line
-                                </button>
-                              </div>
-                            </div>
-                            
-                            {/* Editing interface */}
-                            {editingLine === index && (
-                              <div className="mt-3 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <textarea
-                                  value={editContent}
-                                  onChange={(e) => setEditContent(e.target.value)}
-                                  className="w-full rounded-md border border-gray-300 bg-white p-3 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                  rows={3}
-                                />
-                                <div className="flex justify-end space-x-3 mt-3">
-                                  <button
-                                    onClick={handleCancelEdit}
-                                    className="flex items-center space-x-1.5 rounded-md bg-gray-200 px-4 py-1.5 text-xs font-medium hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
-                                  >
-                                    <FiX className="h-3.5 w-3.5" />
-                                    <span>Cancel</span>
-                                  </button>
-                                  <button
-                                    onClick={() => handleSaveEdit(index)}
-                                    className="flex items-center space-x-1.5 rounded-md bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
-                                  >
-                                    <FiCheck className="h-3.5 w-3.5" />
-                                    <span>Apply Changes</span>
-                                  </button>
+                              {/* AI Improved Version */}
+                              {hasImprovements && (
+                                <div className="px-4 pb-4">
+                                  <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700">
+                                    <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-3 flex items-center">
+                                      AI Enhanced Version
+                                    </h4>
+                                    <div className="rounded-lg p-3">
+                                      <p className="text-sm text-yellow-900 dark:text-yellow-200 font-medium">
+                                        {analysisResults.improvedContent?.[index]}
+                                      </p>
+                                    </div>
+                                    <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2">
+                                      This enhanced version improves clarity, impact, and ATS optimization.
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         );
                       })}
@@ -678,61 +699,110 @@ Generated on: ${new Date().toLocaleString()}
                   </div>
                 </div>
                 
-                <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
-                  <div className="bg-gray-100 dark:bg-gray-800 px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="font-medium text-gray-900 dark:text-white">Improvement Suggestions</h3>
+                <div className="space-y-6">
+                  {/* AI Analysis Summary */}
+                  <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+                    <div className="bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-lg">AI Analysis Summary</h3>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                        <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-2">Content Quality Metrics</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-blue-700 dark:text-blue-400">Total Lines</p>
+                            <p className="text-blue-900 dark:text-blue-200 font-semibold">{resumeLines.length}</p>
+                          </div>
+                          <div>
+                            <p className="text-blue-700 dark:text-blue-400">Lines with Suggestions</p>
+                            <p className="text-blue-900 dark:text-blue-200 font-semibold">{resumeLines.filter((_, i) => getSuggestionForLine(i, '')).length}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                        <h4 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">Key Strengths Identified</h4>
+                        <ul className="text-sm text-green-700 dark:text-green-300 space-y-2">
+                          <li className="flex items-start space-x-2">
+                            <span className="text-green-500 mt-1">✓</span>
+                            <span>Strong technical skills and quantifiable achievements</span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-green-500 mt-1">✓</span>
+                            <span>Clear project descriptions with measurable outcomes</span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-green-500 mt-1">✓</span>
+                            <span>Professional formatting and structure</span>
+                          </li>
+                        </ul>
+                      </div>
+                      
+                      <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-800">
+                        <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Areas for Improvement</h4>
+                        <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1 space-y-2">
+                          <li className="flex items-start space-x-2">
+                            <span className="text-yellow-500 mt-1">•</span>
+                            <span>Some lines could benefit from stronger action verbs</span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-yellow-500 mt-1">•</span>
+                            <span>Consider adding more quantifiable metrics</span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-yellow-500 mt-1">•</span>
+                            <span>Ensure consistent formatting throughout</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                  <div className="max-h-[500px] overflow-y-auto p-5">
-                    {resumeLines.some((_, i) => getSuggestionForLine(i, resumeLines[i])) ? (
-                      <div className="space-y-6">
-                        {resumeLines.map((line, index) => {
-                          const suggestions = getSuggestionForLine(index, line);
-                          if (!suggestions) return null;
-                          
-                          return (
-                            <div key={index} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                              <div className="flex items-start space-x-3 mb-3">
-                                <div className="bg-blue-100 dark:bg-blue-900/30 rounded-md px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-300">
-                                  Line {index + 1}
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm text-gray-800 dark:text-gray-200 font-mono">
-                                    {line || "\u00A0"}
-                                  </p>
+                  
+                  {/* Missing Sections Recommendations */}
+                  <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-lg">Missing Sections Analysis</h3>
+                    </div>
+                    <div className="p-6">
+                      {missingSections.length > 0 ? (
+                        <div className="space-y-4">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            The following sections are missing from your resume. Adding them can significantly improve your ATS score and professional presentation.
+                          </p>
+                          <div className="grid grid-cols-1 gap-3">
+                            {missingSections.map((section, index) => (
+                              <div key={index} className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                                <div className="flex items-start space-x-3">
+                                  <div className="bg-purple-100 dark:bg-purple-800 p-2 rounded-full">
+                                    <span className="text-purple-600 dark:text-purple-400 text-sm font-medium">+</span>
+                                  </div>
+                                  <div>
+                                    <h4 className="text-sm font-semibold text-purple-800 dark:text-purple-300 mb-1">
+                                      {section}
+                                    </h4>
+                                    <p className="text-xs text-purple-700 dark:text-purple-400">
+                                      Adding this section will improve your resume's completeness and ATS compatibility.
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                              
-                              <div className="border-t border-gray-100 dark:border-gray-700 pt-3 mt-3">
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                  Suggestions:
-                                </p>
-                                <ul className="space-y-3 mb-4">
-                                  {suggestions.map((suggestion, idx) => (
-                                    <li key={idx} className="flex items-start space-x-2.5 bg-gray-50 dark:bg-gray-900 p-2 rounded-md">
-                                      <div className="mt-1.5 h-2.5 w-2.5 rounded-full bg-blue-400 flex-shrink-0"></div>
-                                      <p className="text-sm text-gray-600 dark:text-gray-400">{suggestion}</p>
-                                    </li>
-                                  ))}
-                                </ul>
-                                <button
-                                  onClick={() => handleLineClick(index, suggestions)}
-                                  className="w-full flex items-center justify-center space-x-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-                                >
-                                  <FiEdit3 className="h-4 w-4" />
-                                  <span>Apply Best Suggestion</span>
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          No suggestions available for this resume.
-                        </p>
-                      </div>
-                    )}
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                            <span className="text-green-600 dark:text-green-400 text-2xl">✓</span>
+                          </div>
+                          <h4 className="text-sm font-semibold text-green-800 dark:text-green-300 mb-2">
+                            All Essential Sections Present!
+                          </h4>
+                          <p className="text-xs text-green-700 dark:text-green-400">
+                            Your resume covers all the important sections that recruiters and ATS systems look for.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

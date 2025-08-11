@@ -4,12 +4,19 @@ import React, { useState, useCallback, useRef } from "react";
 import { FiUpload, FiFileText, FiCheckCircle, FiAlertCircle, FiInfo, FiTarget } from "react-icons/fi";
 import { useResumeContext } from "../../lib/context/resume-context";
 import { apiService } from "../../lib/services/api-service";
+import { PaymentModal } from "./payment-modal";
 
 interface UploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
   success: boolean;
+}
+
+interface PaymentState {
+  showPaymentModal: boolean;
+  userEmail: string;
+  analysisCount: number;
 }
 
 const ContextAwareUploader: React.FC = () => {
@@ -21,6 +28,11 @@ const ContextAwareUploader: React.FC = () => {
     success: false,
   });
   const [dragActive, setDragActive] = useState(false);
+  const [paymentState, setPaymentState] = useState<PaymentState>({
+    showPaymentModal: false,
+    userEmail: '',
+    analysisCount: 0,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Generate context-aware upload guidance
@@ -193,6 +205,23 @@ const ContextAwareUploader: React.FC = () => {
 
       const response = await apiService.analyzeResume(formData);
 
+      // Check if payment is required
+      if (response.error === 'Payment required' && response.requiresPayment) {
+        clearInterval(progressInterval);
+        setUploadState(prev => ({ ...prev, isUploading: false, progress: 0 }));
+        
+        // Extract user email from resume content for payment
+        const emailMatch = response.content?.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/i);
+        const userEmail = emailMatch ? emailMatch[0] : 'user@example.com';
+        
+        setPaymentState({
+          showPaymentModal: true,
+          userEmail,
+          analysisCount: response.analysisCount || 1,
+        });
+        return;
+      }
+
       clearInterval(progressInterval);
       setUploadState(prev => ({ ...prev, progress: 100, success: true }));
 
@@ -228,9 +257,10 @@ const ContextAwareUploader: React.FC = () => {
               volunteerWork: (response.atsSuggestions as any)?.volunteerWork || 'Include volunteer experience that demonstrates relevant skills.',
             },
             improvedContent: response.improvedContent,
+            jobProfiles: response.jobProfiles || [],
           },
-          atsScore: response.atsScore,
-          resumeId: response.resumeId,
+          atsScore: response.atsScore || 0,
+          resumeId: response.resumeId || '',
           filename: file.name,
           lastModified: new Date(),
         });
@@ -266,6 +296,18 @@ const ContextAwareUploader: React.FC = () => {
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentState(prev => ({ ...prev, showPaymentModal: false }));
+    // Retry the upload after successful payment
+    if (fileInputRef.current?.files?.[0]) {
+      handleFileUpload(fileInputRef.current.files[0]);
+    }
+  };
+
+  const handlePaymentClose = () => {
+    setPaymentState(prev => ({ ...prev, showPaymentModal: false }));
   };
 
   const guidance = getUploadGuidance();
@@ -423,6 +465,16 @@ const ContextAwareUploader: React.FC = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Payment Modal */}
+      {paymentState.showPaymentModal && (
+        <PaymentModal
+          onClose={handlePaymentClose}
+          onPaymentSuccess={handlePaymentSuccess}
+          userEmail={paymentState.userEmail}
+          analysisCount={paymentState.analysisCount}
+        />
       )}
     </div>
   );

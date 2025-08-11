@@ -73,24 +73,24 @@ const ContextAwareChatbot: React.FC = () => {
   // Generate context-aware welcome message
   function generateWelcomeMessage(): string {
     if (!state.resumeData) {
-      return "Hi there! I'm your AI career advisor. I can help you with career guidance, resume optimization, and job search strategies. Upload your resume to get personalized advice!";
+      return "Hey there! 👋 I'm Coach, your AI career buddy. I'd love to help you with your career goals, resume tips, or job search strategies. Feel free to upload your resume anytime for personalized advice!";
     }
 
     const score = state.resumeData.atsScore || 0;
     const keyPointsCount = state.resumeData.keyPoints?.length || 0;
+    const filename = state.resumeData.filename || 'resume';
 
-    let message = `Welcome back! I can see your resume "${state.resumeData.filename || 'resume'}" with an ATS score of ${score}%. `;
+    let message = `Hey! 👋 I just finished looking at your resume "${filename}" and I'm excited to chat about it!\n\n`;
     
     if (score < 70) {
-      message += "I notice your ATS score could be improved. Would you like me to help you optimize it?";
+      message += `I can see your ATS score is ${score}% - honestly, there's definitely room to make this even stronger! I spotted ${keyPointsCount} key highlights in your experience, which is great.\n\n`;
+      message += `What would you like to work on first? Maybe we could focus on boosting that ATS score, or I could help you highlight some of your achievements better. What sounds most helpful to you right now?`;
     } else if (score >= 85) {
-      message += "Great job! Your resume is well-optimized for ATS systems. Let's focus on making it even stronger.";
+      message += `Wow, ${score}% ATS score - that's really impressive! 🎉 You've clearly put some solid work into this. I found ${keyPointsCount} great highlights in your experience.\n\n`;
+      message += `Your resume is already in great shape! What's next on your mind? Are you looking to target specific roles, or maybe just want to keep it sharp for future opportunities?`;
     } else {
-      message += "Your resume is looking good! Let me help you make it even better.";
-    }
-
-    if (keyPointsCount < 5) {
-      message += " I also noticed you could add more quantifiable achievements to make your resume stand out.";
+      message += `Your ATS score is ${score}% - that's a solid foundation! I found ${keyPointsCount} great highlights in your experience that we can definitely build on.\n\n`;
+      message += `There's definitely potential here to make it even stronger. What aspect would you like to focus on? Maybe we could work on the content, or perhaps you want to target specific job roles?`;
     }
 
     return message;
@@ -104,26 +104,42 @@ const ContextAwareChatbot: React.FC = () => {
       suggestions.push("What jobs should I target?");
       suggestions.push("How can I improve my resume?");
       suggestions.push("What skills are in demand?");
+      suggestions.push("How to write a professional summary?");
       return suggestions;
     }
 
     const score = state.resumeData.atsScore || 0;
     const keyPointsCount = state.resumeData.keyPoints?.length || 0;
 
+    // Score-based suggestions
     if (score < 70) {
-      suggestions.push("How can I improve my ATS score?");
-      suggestions.push("What keywords should I add?");
+      suggestions.push("Help me boost my ATS score!");
+      suggestions.push("What keywords am I missing?");
+      suggestions.push("How can I make my resume stand out?");
+    } else if (score >= 85) {
+      suggestions.push("How can I make this even better?");
+      suggestions.push("What jobs am I perfect for?");
+      suggestions.push("How do I leverage my strong resume?");
+    } else {
+      suggestions.push("What should I focus on improving?");
+      suggestions.push("How can I get to the next level?");
+      suggestions.push("What's holding me back?");
     }
 
+    // Content-based suggestions
     if (keyPointsCount < 5) {
-      suggestions.push("How can I add more achievements?");
+      suggestions.push("How can I highlight my achievements?");
       suggestions.push("What metrics should I include?");
+      suggestions.push("How do I make my experience pop?");
     }
 
-    suggestions.push("What jobs should I target?");
-    suggestions.push("How can I improve my skills section?");
+    // General resume suggestions
+    suggestions.push("What jobs should I go for?");
+    suggestions.push("How can I make my skills shine?");
+    suggestions.push("How do I write killer bullet points?");
+    suggestions.push("What am I missing?");
 
-    return suggestions;
+    return suggestions.slice(0, 6); // Limit to 6 suggestions
   }
 
   const handleSendMessage = async () => {
@@ -231,6 +247,39 @@ const ContextAwareChatbot: React.FC = () => {
     return undefined;
   }
 
+  // Format message text with markdown-like formatting
+  const formatMessageText = (text: string): string => {
+    if (!text) return '';
+    
+    return text
+      // Bold text: **text** -> <strong>text</strong>
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+      // Italic text: *text* -> <em>text</em>
+      .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+      // Bullet points: • text -> <span class="text-blue-500">•</span> text
+      .replace(/•\s*/g, '<span class="text-blue-500 mr-2">•</span>')
+      // Checkmarks: ✓ text -> <span class="text-green-500">✓</span> text
+      .replace(/✓\s*/g, '<span class="text-green-500 mr-2">✓</span>')
+      // Warning: ⚠️ text -> <span class="text-yellow-500">⚠️</span> text
+      .replace(/⚠️\s*/g, '<span class="text-yellow-500 mr-2">⚠️</span>')
+      // Success: ✅ text -> <span class="text-green-500">✅</span> text
+      .replace(/✅\s*/g, '<span class="text-green-500 mr-2">✅</span>')
+      // Info: 📊 text -> <span class="text-blue-500">📊</span> text
+      .replace(/📊\s*/g, '<span class="text-blue-500 mr-2">📊</span>')
+      // Lightbulb: 💡 text -> <span class="text-yellow-500">💡</span> text
+      .replace(/💡\s*/g, '<span class="text-yellow-500 mr-2">💡</span>')
+      // Rocket: 🚀 text -> <span class="text-purple-500">🚀</span> text
+      .replace(/🚀\s*/g, '<span class="text-purple-500 mr-2">🚀</span>')
+      // File: 📄 text -> <span class="text-blue-500">📄</span> text
+      .replace(/📄\s*/g, '<span class="text-blue-500 mr-2">📄</span>')
+      // Refresh: 🔄 text -> <span class="text-orange-500">🔄</span> text
+      .replace(/🔄\s*/g, '<span class="text-orange-500 mr-2">🔄</span>')
+      // Line breaks: \n -> <br>
+      .replace(/\n/g, '<br>')
+      // Double line breaks: \n\n -> <br><br>
+      .replace(/\n\n/g, '<br><br>');
+  };
+
   // Format time consistently
   const formatTime = (timestamp: Date) => {
     if (!mounted) return '--:--';
@@ -324,7 +373,7 @@ const ContextAwareChatbot: React.FC = () => {
                         : "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white rounded-tl-none"
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-line">{message.text}</p>
+                    <div className="text-sm whitespace-pre-line" dangerouslySetInnerHTML={{ __html: formatMessageText(message.text) }} />
                     {message.context && message.context.suggestion && (
                       <div className="mt-2 rounded bg-blue-50 p-2 dark:bg-blue-900/20">
                         <p className="text-xs text-blue-700 dark:text-blue-300">

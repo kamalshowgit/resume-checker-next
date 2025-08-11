@@ -35,13 +35,16 @@ export interface ResumeData {
     improvedContent?: {
       [key: string]: string;
     };
+    jobProfiles?: Array<{
+      title: string;
+      matchScore: number;
+      reasoning: string;
+    }>;
   };
-  atsScore?: number;
-  jobs?: Array<{ title: string; url: string }>;
-  resumeId?: string;
-  filename?: string;
-  lastModified?: Date;
-  version?: number;
+  atsScore: number;
+  resumeId: string;
+  filename: string;
+  lastModified: Date;
 }
 
 export interface UserSession {

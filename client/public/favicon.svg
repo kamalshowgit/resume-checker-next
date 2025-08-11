@@ -1,0 +1,23 @@
+<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle with gradient -->
+  <defs>
+    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9333ea;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="16" fill="url(#faviconGradient)"/>
+  
+  <!-- Main checkmark symbol -->
+  <path d="M8 16L13 21L24 10" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Mathematical optimization arrows -->
+  <path d="M6 8L10 12M26 24L22 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  
+  <!-- Small mathematical dots representing data points -->
+  <circle cx="16" cy="8" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="24" cy="16" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="8" cy="24" r="1.5" fill="white" opacity="0.8"/>
+</svg>

@@ -153,6 +153,32 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const savedResume = db.saveResume(cleanedText);
     console.log(`✅ Resume saved with ID: ${savedResume.id}`);
     
+    // Check payment status before AI analysis
+    const userEmail = savedResume.email;
+    if (userEmail) {
+      const canPerformFreeAnalysis = db.canPerformFreeAnalysis(userEmail);
+      
+      if (!canPerformFreeAnalysis) {
+        // User has already used free analysis, check if they're paid
+        const userStatus = db.getUserAnalysisStatus(userEmail);
+        
+        if (!userStatus?.isPaidUser) {
+          // User needs to pay for additional analysis
+          return res.status(402).json({
+            success: false,
+            error: 'Payment required',
+            message: 'You have used your free analysis. Please pay ₹49 for additional analyses.',
+            requiresPayment: true,
+            email: userEmail,
+            analysisCount: userStatus?.analysisCount || 1
+          });
+        }
+      }
+      
+      // Increment analysis count for user
+      db.incrementAnalysisCount(userEmail);
+    }
+    
     // Get AI analysis (with fallback handling)
     console.log(`🤖 Getting AI analysis...`);
     let atsScore = 0;
@@ -160,8 +186,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     let atsSuggestions = null;
     let keyPoints: string[] = [];
     let improvedContent: { [key: string]: string } = {};
+    let jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }> = [];
     
     try {
+      console.log(`📝 Extracted text length: ${cleanedText.length} characters`);
+      console.log(`📝 First 200 characters: ${cleanedText.substring(0, 200)}...`);
+      
       const [atsResult, keyPointsResult] = await Promise.all([
         calculateATSScore(cleanedText),
         extractKeyPoints(cleanedText)
@@ -171,6 +201,14 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       atsBreakdown = atsResult.breakdown;
       atsSuggestions = atsResult.suggestions;
       keyPoints = keyPointsResult;
+      jobProfiles = atsResult.jobProfiles || [];
+      
+      console.log(`✅ ATS Analysis Results:`, {
+        score: atsScore,
+        breakdown: atsBreakdown,
+        suggestionsCount: atsSuggestions?.length || 0,
+        jobProfilesCount: jobProfiles.length
+      });
       
       // Generate improved content for each line (limit to prevent rate limiting)
       const lines = cleanedText.split('\n');
@@ -205,7 +243,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         }
       }
       
-      console.log(`✅ AI analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Improved Lines: ${Object.keys(improvedContent).length}`);
+      console.log(`✅ AI analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Improved Lines: ${Object.keys(improvedContent).length}, Job Profiles: ${jobProfiles.length}`);
     } catch (aiError) {
       console.error('❌ AI analysis failed:', aiError);
       // Don't use fallback - let the error propagate to ensure AI is always used
@@ -226,6 +264,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       atsSuggestions,
       keyPoints,
       improvedContent,
+      jobProfiles,
       message: 'File uploaded and processed successfully',
       processingDetails: {
         charactersExtracted: cleanedText.length,
@@ -273,6 +312,32 @@ router.post('/analyze', async (req, res) => {
     const savedResume = db.saveResume(cleanedText);
     console.log(`✅ Resume saved with ID: ${savedResume.id}`);
     
+    // Check payment status before AI analysis
+    const userEmail = savedResume.email;
+    if (userEmail) {
+      const canPerformFreeAnalysis = db.canPerformFreeAnalysis(userEmail);
+      
+      if (!canPerformFreeAnalysis) {
+        // User has already used free analysis, check if they're paid
+        const userStatus = db.getUserAnalysisStatus(userEmail);
+        
+        if (!userStatus?.isPaidUser) {
+          // User needs to pay for additional analysis
+          return res.status(402).json({
+            success: false,
+            error: 'Payment required',
+            message: 'You have used your free analysis. Please pay ₹49 for additional analyses.',
+            requiresPayment: true,
+            email: userEmail,
+            analysisCount: userStatus?.analysisCount || 1
+          });
+        }
+      }
+      
+      // Increment analysis count for user
+      db.incrementAnalysisCount(userEmail);
+    }
+    
     // Get AI analysis (with fallback handling)
     console.log(`🤖 Getting AI analysis...`);
     let atsScore = 0;
@@ -280,8 +345,11 @@ router.post('/analyze', async (req, res) => {
     let atsSuggestions = null;
     let keyPoints: string[] = [];
     let improvedContent: { [key: string]: string } = {};
+    let jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }> = [];
     
     try {
+      console.log(`📝 Analyzing text length: ${cleanedText.length} characters`);
+      
       const [atsResult, keyPointsResult] = await Promise.all([
         calculateATSScore(cleanedText),
         extractKeyPoints(cleanedText)
@@ -291,6 +359,14 @@ router.post('/analyze', async (req, res) => {
       atsBreakdown = atsResult.breakdown;
       atsSuggestions = atsResult.suggestions;
       keyPoints = keyPointsResult;
+      jobProfiles = atsResult.jobProfiles || [];
+      
+      console.log(`✅ ATS Analysis Results:`, {
+        score: atsScore,
+        breakdown: atsBreakdown,
+        suggestionsCount: atsSuggestions?.length || 0,
+        jobProfilesCount: jobProfiles.length
+      });
       
       // Generate improved content for each line
       const lines = cleanedText.split('\n');
@@ -308,7 +384,7 @@ router.post('/analyze', async (req, res) => {
         }
       }
       
-      console.log(`✅ AI analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Improved Lines: ${Object.keys(improvedContent).length}`);
+      console.log(`✅ AI analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Improved Lines: ${Object.keys(improvedContent).length}, Job Profiles: ${jobProfiles.length}`);
     } catch (aiError) {
       console.error('❌ AI analysis failed:', aiError);
       // Don't use fallback - let the error propagate to ensure AI is always used
@@ -329,6 +405,7 @@ router.post('/analyze', async (req, res) => {
       atsSuggestions,
       keyPoints,
       improvedContent,
+      jobProfiles,
       message: 'Text analyzed successfully',
       processingDetails: {
         charactersExtracted: cleanedText.length,
@@ -360,11 +437,13 @@ router.post('/ats-analysis', async (req, res) => {
     const atsScore = atsResult.score;
     const breakdown = atsResult.breakdown;
     const suggestions = atsResult.suggestions;
+    const jobProfiles = atsResult.jobProfiles || [];
     
     res.json({
       score: atsScore,
       breakdown,
       suggestions,
+      jobProfiles,
       timestamp: new Date().toISOString()
     });
 
@@ -609,13 +688,32 @@ const ChatSchema = z.object({
     .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string() }))
     .default([]),
   message: z.string().min(1),
+  context: z.object({
+    resumeData: z.any().optional(),
+    currentScore: z.number().optional(),
+    keyPoints: z.array(z.string()).optional(),
+    recentActions: z.array(z.any()).optional(),
+    userSession: z.any().optional(),
+  }).optional(),
 });
 
 router.post('/chat', async (req, res) => {
   const parse = ChatSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
-  const reply = await chatSuggest(parse.data.history, parse.data.message);
-  res.json({ reply });
+  
+  try {
+    const reply = await chatSuggest(
+      parse.data.history, 
+      parse.data.message, 
+      parse.data.context
+    );
+    res.json({ reply });
+  } catch (error) {
+    console.error('❌ Chat error:', error);
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to get chat response' 
+    });
+  }
 });
 
 // Admin route to get database statistics (for future use)

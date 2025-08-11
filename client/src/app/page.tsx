@@ -72,6 +72,7 @@ const HomeContent = () => {
                       volunteerWork: state.resumeData.analysis?.suggestions?.volunteerWork || 'Include volunteer experience that demonstrates relevant skills.',
                     },
                     improvedContent: state.resumeData.analysis?.improvedContent,
+                    jobProfiles: state.resumeData.analysis?.jobProfiles || [],
                   }}
                   resumeText={state.resumeData.text || ''}
                   onContentUpdate={(updatedText) => {

@@ -18,6 +18,16 @@ export interface ResumeRecord {
   updatedAt?: string;
 }
 
+export interface DeviceAnalysis {
+  id?: number;
+  deviceId: string;
+  analysisCount: number;
+  isPaidUser: boolean;
+  lastAnalysisDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 class DatabaseService {
   private db: Database.Database;
 
@@ -59,6 +69,22 @@ class DatabaseService {
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_email ON resumes(email)');
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_phone ON resumes(phone)');
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_linkedin ON resumes(linkedin)');
+    
+    // Create device analysis tracking table
+    const createDeviceAnalysisTable = `
+      CREATE TABLE IF NOT EXISTS device_analysis (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        deviceId TEXT UNIQUE NOT NULL,
+        analysisCount INTEGER DEFAULT 0,
+        isPaidUser BOOLEAN DEFAULT FALSE,
+        lastAnalysisDate DATETIME,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    this.db.exec(createDeviceAnalysisTable);
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_device_analysis_deviceId ON device_analysis(deviceId)');
     
     console.log('📊 Database initialized successfully');
   }
@@ -356,6 +382,60 @@ class DatabaseService {
   /**
    * Close database connection
    */
+  /**
+   * Check if user can perform free analysis
+   */
+  canPerformFreeAnalysis(email: string): boolean {
+    const stmt = this.db.prepare('SELECT analysisCount FROM user_analysis WHERE email = ?');
+    const result = stmt.get(email) as { analysisCount: number } | undefined;
+    
+    if (!result) {
+      // New user, can perform free analysis
+      return true;
+    }
+    
+    return result.analysisCount === 0;
+  }
+
+  /**
+   * Increment user analysis count
+   */
+  incrementAnalysisCount(email: string): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO user_analysis (email, analysisCount, lastAnalysisDate, updatedAt) 
+      VALUES (?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET 
+        analysisCount = analysisCount + 1,
+        lastAnalysisDate = CURRENT_TIMESTAMP,
+        updatedAt = CURRENT_TIMESTAMP
+    `);
+    
+    stmt.run(email);
+  }
+
+  /**
+   * Mark user as paid
+   */
+  markUserAsPaid(email: string): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO user_analysis (email, isPaidUser, updatedAt) 
+      VALUES (?, TRUE, CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET 
+        isPaidUser = TRUE,
+        updatedAt = CURRENT_TIMESTAMP
+    `);
+    
+    stmt.run(email);
+  }
+
+  /**
+   * Get user analysis status
+   */
+  getUserAnalysisStatus(email: string): UserAnalysis | null {
+    const stmt = this.db.prepare('SELECT * FROM user_analysis WHERE email = ?');
+    return stmt.get(email) as UserAnalysis | null;
+  }
+
   close() {
     this.db.close();
   }

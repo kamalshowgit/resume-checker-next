@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiX } from "react-icons/fi";
+import { FiX, FiCreditCard, FiShield, FiCheck } from "react-icons/fi";
 import axios from "axios";
 
 interface PaymentModalProps {
   onClose: () => void;
   onPaymentSuccess: () => void;
-  userEmail?: string;
+  userEmail: string;
+  analysisCount: number;
 }
 
 export function PaymentModal({
@@ -24,23 +25,82 @@ export function PaymentModal({
     setError("");
 
     try {
-      // Mock payment processing
-      // In a real app, this would create a payment session with Razorpay/Stripe
-      // and handle the payment flow
-      
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API call
-      
-      // After successful payment, update the user's payment status
-      const response = await axios.post("http://localhost:5000/api/payment", {
-        email: userEmail,
-        paymentId: `mock_payment_${Date.now()}`, // This would be the actual payment ID from the payment gateway
+      // Create payment order
+      const orderResponse = await axios.post("http://localhost:5000/api/pay/create-order", {
+        email: userEmail
       });
-
-      if (response.data.success) {
-        onPaymentSuccess();
-      } else {
-        throw new Error("Payment verification failed");
+      
+      if (!orderResponse.data.id) {
+        throw new Error("Failed to create payment order");
       }
+
+      // Check if we're in mock mode
+      if (orderResponse.data.mock) {
+        // Mock payment mode - simulate payment success
+        console.log("🧪 Mock payment mode - simulating payment success");
+        
+        // Simulate payment processing delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Simulate payment verification
+        const verifyResponse = await axios.post("http://localhost:5000/api/pay/verify", {
+          razorpay_order_id: orderResponse.data.id,
+          razorpay_payment_id: `mock_payment_${Date.now()}`,
+          razorpay_signature: "mock_signature",
+          email: userEmail
+        });
+        
+        if (verifyResponse.data.success) {
+          onPaymentSuccess();
+        } else {
+          throw new Error("Mock payment verification failed");
+        }
+      } else {
+        // Real Razorpay payment mode
+        if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+          throw new Error("Razorpay API key not configured");
+        }
+
+        // Initialize Razorpay payment
+        const options = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: 4900, // ₹49.00 in paise
+          currency: "INR",
+          name: "ResumeCheck",
+          description: "Resume Analysis Service",
+          order_id: orderResponse.data.id,
+          handler: async function (response: any) {
+            try {
+              // Verify payment
+              const verifyResponse = await axios.post("http://localhost:5000/api/pay/verify", {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                email: userEmail
+              });
+              
+              if (verifyResponse.data.success) {
+                onPaymentSuccess();
+              } else {
+                throw new Error("Payment verification failed");
+              }
+            } catch (error) {
+              console.error("Payment verification error:", error);
+              setError("Payment verification failed. Please contact support.");
+            }
+          },
+          prefill: {
+            email: userEmail,
+          },
+          theme: {
+            color: "#2563eb",
+          },
+        };
+
+        const razorpay = new (window as any).Razorpay(options);
+        razorpay.open();
+      }
+      
     } catch (error) {
       console.error("Payment error:", error);
       setError("Payment failed. Please try again.");
@@ -77,13 +137,24 @@ export function PaymentModal({
         </div>
 
         <div className="mt-4">
-          <p className="text-gray-600 dark:text-gray-400">
-            Your first resume analysis is free. Additional analyses are ₹49 each.
-          </p>
+          <div className="mb-4 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+            <div className="flex items-center space-x-2">
+              <FiCheck className="h-5 w-5 text-blue-600" />
+              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                You've used {analysisCount} analysis{analysisCount > 1 ? 'es' : ''}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+              Your first analysis was free. Additional analyses are ₹49 each.
+            </p>
+          </div>
 
           <div className="mt-6 space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800">
             <div className="flex items-center justify-between">
-              <span>Resume Analysis</span>
+              <span className="flex items-center space-x-2">
+                <FiCreditCard className="h-4 w-4 text-gray-500" />
+                <span>Resume Analysis</span>
+              </span>
               <span>₹49.00</span>
             </div>
             <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
@@ -111,6 +182,16 @@ export function PaymentModal({
           <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
             Secure payment processing. Your payment information is not stored.
           </p>
+          
+          {/* Mock Payment Indicator */}
+          <div className="mt-4 rounded-lg bg-yellow-50 p-3 dark:bg-yellow-900/20">
+            <div className="flex items-center space-x-2">
+              <span className="text-yellow-600">🧪</span>
+              <span className="text-xs text-yellow-800 dark:text-yellow-200">
+                <strong>Development Mode:</strong> Payment simulation enabled. No real charges will be made.
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

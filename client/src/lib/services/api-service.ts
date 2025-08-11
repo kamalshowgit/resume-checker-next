@@ -13,9 +13,16 @@ export interface ResumeAnalysisResponse {
   atsSuggestions?: Record<string, unknown>;
   keyPoints?: string[];
   improvedContent?: Record<string, string>;
+  jobProfiles?: Array<{
+    title: string;
+    matchScore: number;
+    reasoning: string;
+  }>;
   message?: string;
   processingDetails?: Record<string, unknown>;
   error?: string;
+  requiresPayment?: boolean;
+  analysisCount?: number;
 }
 
 export interface ChatResponse {
