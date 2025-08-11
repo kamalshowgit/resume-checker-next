@@ -5,6 +5,7 @@ import { FiUpload, FiFileText, FiCheckCircle, FiAlertCircle, FiInfo, FiTarget } 
 import { useResumeContext } from "../../lib/context/resume-context";
 import { apiService } from "../../lib/services/api-service";
 import { PaymentModal } from "./payment-modal";
+import { getDeviceId } from "../../lib/utils/device-id";
 
 interface UploadState {
   isUploading: boolean;
@@ -15,7 +16,7 @@ interface UploadState {
 
 interface PaymentState {
   showPaymentModal: boolean;
-  userEmail: string;
+  deviceId: string;
   analysisCount: number;
 }
 
@@ -30,7 +31,7 @@ const ContextAwareUploader: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
   const [paymentState, setPaymentState] = useState<PaymentState>({
     showPaymentModal: false,
-    userEmail: '',
+    deviceId: '',
     analysisCount: 0,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -210,13 +211,12 @@ const ContextAwareUploader: React.FC = () => {
         clearInterval(progressInterval);
         setUploadState(prev => ({ ...prev, isUploading: false, progress: 0 }));
         
-        // Extract user email from resume content for payment
-        const emailMatch = response.content?.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/i);
-        const userEmail = emailMatch ? emailMatch[0] : 'user@example.com';
+        // Generate device ID using utility
+        const deviceId = getDeviceId();
         
         setPaymentState({
           showPaymentModal: true,
-          userEmail,
+          deviceId,
           analysisCount: response.analysisCount || 1,
         });
         return;
@@ -472,7 +472,7 @@ const ContextAwareUploader: React.FC = () => {
         <PaymentModal
           onClose={handlePaymentClose}
           onPaymentSuccess={handlePaymentSuccess}
-          userEmail={paymentState.userEmail}
+          deviceId={paymentState.deviceId}
           analysisCount={paymentState.analysisCount}
         />
       )}

@@ -154,30 +154,32 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     console.log(`✅ Resume saved with ID: ${savedResume.id}`);
     
     // Check payment status before AI analysis
-    const userEmail = savedResume.email;
-    if (userEmail) {
-      const canPerformFreeAnalysis = db.canPerformFreeAnalysis(userEmail);
+    // Extract device ID from request headers (User-Agent + IP as fallback)
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const deviceId = `${userAgent.substring(0, 50)}_${clientIP}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+    
+    const canPerformFreeAnalysis = db.canPerformFreeAnalysis(deviceId);
+    
+    if (!canPerformFreeAnalysis) {
+      // Device has already used free analysis, check if it's paid
+      const deviceStatus = db.getDeviceAnalysisStatus(deviceId);
       
-      if (!canPerformFreeAnalysis) {
-        // User has already used free analysis, check if they're paid
-        const userStatus = db.getUserAnalysisStatus(userEmail);
-        
-        if (!userStatus?.isPaidUser) {
-          // User needs to pay for additional analysis
-          return res.status(402).json({
-            success: false,
-            error: 'Payment required',
-            message: 'You have used your free analysis. Please pay ₹49 for additional analyses.',
-            requiresPayment: true,
-            email: userEmail,
-            analysisCount: userStatus?.analysisCount || 1
-          });
-        }
+      if (!deviceStatus?.isPaidUser) {
+        // Device needs to pay for additional analysis
+        return res.status(402).json({
+          success: false,
+          error: 'Payment required',
+          message: 'You have used your free analysis. Please pay ₹49 for additional analyses.',
+          requiresPayment: true,
+          deviceId: deviceId,
+          analysisCount: deviceStatus?.analysisCount || 1
+        });
       }
-      
-      // Increment analysis count for user
-      db.incrementAnalysisCount(userEmail);
     }
+    
+    // Increment analysis count for device
+    db.incrementAnalysisCount(deviceId);
     
     // Get AI analysis (with fallback handling)
     console.log(`🤖 Getting AI analysis...`);
@@ -313,30 +315,32 @@ router.post('/analyze', async (req, res) => {
     console.log(`✅ Resume saved with ID: ${savedResume.id}`);
     
     // Check payment status before AI analysis
-    const userEmail = savedResume.email;
-    if (userEmail) {
-      const canPerformFreeAnalysis = db.canPerformFreeAnalysis(userEmail);
+    // Extract device ID from request headers (User-Agent + IP as fallback)
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    const deviceId = `${userAgent.substring(0, 50)}_${clientIP}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+    
+    const canPerformFreeAnalysis = db.canPerformFreeAnalysis(deviceId);
+    
+    if (!canPerformFreeAnalysis) {
+      // Device has already used free analysis, check if it's paid
+      const deviceStatus = db.getDeviceAnalysisStatus(deviceId);
       
-      if (!canPerformFreeAnalysis) {
-        // User has already used free analysis, check if they're paid
-        const userStatus = db.getUserAnalysisStatus(userEmail);
-        
-        if (!userStatus?.isPaidUser) {
-          // User needs to pay for additional analysis
-          return res.status(402).json({
-            success: false,
-            error: 'Payment required',
-            message: 'You have used your free analysis. Please pay ₹49 for additional analyses.',
-            requiresPayment: true,
-            email: userEmail,
-            analysisCount: userStatus?.analysisCount || 1
-          });
-        }
+      if (!deviceStatus?.isPaidUser) {
+        // Device needs to pay for additional analysis
+        return res.status(402).json({
+          success: false,
+          error: 'Payment required',
+          message: 'You have used your free analysis. Please pay ₹49 for additional analyses.',
+          requiresPayment: true,
+          deviceId: deviceId,
+          analysisCount: deviceStatus?.analysisCount || 1
+        });
       }
-      
-      // Increment analysis count for user
-      db.incrementAnalysisCount(userEmail);
     }
+    
+    // Increment analysis count for device
+    db.incrementAnalysisCount(deviceId);
     
     // Get AI analysis (with fallback handling)
     console.log(`🤖 Getting AI analysis...`);

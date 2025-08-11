@@ -383,14 +383,14 @@ class DatabaseService {
    * Close database connection
    */
   /**
-   * Check if user can perform free analysis
+   * Check if device can perform free analysis
    */
-  canPerformFreeAnalysis(email: string): boolean {
-    const stmt = this.db.prepare('SELECT analysisCount FROM user_analysis WHERE email = ?');
-    const result = stmt.get(email) as { analysisCount: number } | undefined;
+  canPerformFreeAnalysis(deviceId: string): boolean {
+    const stmt = this.db.prepare('SELECT analysisCount FROM device_analysis WHERE deviceId = ?');
+    const result = stmt.get(deviceId) as { analysisCount: number } | undefined;
     
     if (!result) {
-      // New user, can perform free analysis
+      // New device, can perform free analysis
       return true;
     }
     
@@ -398,42 +398,42 @@ class DatabaseService {
   }
 
   /**
-   * Increment user analysis count
+   * Increment device analysis count
    */
-  incrementAnalysisCount(email: string): void {
+  incrementAnalysisCount(deviceId: string): void {
     const stmt = this.db.prepare(`
-      INSERT INTO user_analysis (email, analysisCount, lastAnalysisDate, updatedAt) 
+      INSERT INTO device_analysis (deviceId, analysisCount, lastAnalysisDate, updatedAt) 
       VALUES (?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      ON CONFLICT(email) DO UPDATE SET 
+      ON CONFLICT(deviceId) DO UPDATE SET 
         analysisCount = analysisCount + 1,
         lastAnalysisDate = CURRENT_TIMESTAMP,
         updatedAt = CURRENT_TIMESTAMP
     `);
     
-    stmt.run(email);
+    stmt.run(deviceId);
   }
 
   /**
    * Mark user as paid
    */
-  markUserAsPaid(email: string): void {
+  markDeviceAsPaid(deviceId: string): void {
     const stmt = this.db.prepare(`
-      INSERT INTO user_analysis (email, isPaidUser, updatedAt) 
+      INSERT INTO device_analysis (deviceId, isPaidUser, updatedAt) 
       VALUES (?, TRUE, CURRENT_TIMESTAMP)
-      ON CONFLICT(email) DO UPDATE SET 
+      ON CONFLICT(deviceId) DO UPDATE SET 
         isPaidUser = TRUE,
         updatedAt = CURRENT_TIMESTAMP
     `);
     
-    stmt.run(email);
+    stmt.run(deviceId);
   }
 
   /**
-   * Get user analysis status
+   * Get device analysis status
    */
-  getUserAnalysisStatus(email: string): UserAnalysis | null {
-    const stmt = this.db.prepare('SELECT * FROM user_analysis WHERE email = ?');
-    return stmt.get(email) as UserAnalysis | null;
+  getDeviceAnalysisStatus(deviceId: string): DeviceAnalysis | null {
+    const stmt = this.db.prepare('SELECT * FROM device_analysis WHERE deviceId = ?');
+    return stmt.get(deviceId) as DeviceAnalysis | null;
   }
 
   close() {

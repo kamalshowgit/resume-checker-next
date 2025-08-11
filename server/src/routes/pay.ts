@@ -10,10 +10,10 @@ router.get('/key', (_req, res) => {
 
 router.post('/create-order', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { deviceId } = req.body;
     
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!deviceId) {
+      return res.status(400).json({ error: 'Device ID is required' });
     }
 
     const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID as string | undefined;
@@ -26,7 +26,7 @@ router.post('/create-order', async (req, res) => {
         id: 'order_mock', 
         amount, 
         currency: 'INR',
-        email 
+        deviceId 
       });
     }
     
@@ -38,9 +38,9 @@ router.post('/create-order', async (req, res) => {
     const order = await instance.orders.create({ 
       amount, 
       currency: 'INR',
-      receipt: `resume_analysis_${email}_${Date.now()}`,
+      receipt: `resume_analysis_${deviceId}_${Date.now()}`,
       notes: {
-        email: email,
+        deviceId: deviceId,
         service: 'Resume Analysis'
       }
     });
@@ -54,17 +54,17 @@ router.post('/create-order', async (req, res) => {
 
 router.post('/verify', async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, deviceId } = req.body;
     
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !email) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !deviceId) {
       return res.status(400).json({ error: 'Missing payment verification data' });
     }
 
     // In production, verify the signature with Razorpay
-    // For now, we'll trust the payment data and mark user as paid
+    // For now, we'll trust the payment data and mark device as paid
     
-    // Mark user as paid in database
-    db.markUserAsPaid(email);
+    // Mark device as paid in database
+    db.markDeviceAsPaid(deviceId);
     
     res.json({ 
       success: true, 

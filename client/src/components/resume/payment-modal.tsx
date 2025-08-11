@@ -7,14 +7,15 @@ import axios from "axios";
 interface PaymentModalProps {
   onClose: () => void;
   onPaymentSuccess: () => void;
-  userEmail: string;
+  deviceId: string;
   analysisCount: number;
 }
 
 export function PaymentModal({
   onClose,
   onPaymentSuccess,
-  userEmail = "",
+  deviceId,
+  analysisCount,
 }: PaymentModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,7 +28,7 @@ export function PaymentModal({
     try {
       // Create payment order
       const orderResponse = await axios.post("http://localhost:5000/api/pay/create-order", {
-        email: userEmail
+        deviceId: deviceId
       });
       
       if (!orderResponse.data.id) {
@@ -47,7 +48,7 @@ export function PaymentModal({
           razorpay_order_id: orderResponse.data.id,
           razorpay_payment_id: `mock_payment_${Date.now()}`,
           razorpay_signature: "mock_signature",
-          email: userEmail
+          deviceId: deviceId
         });
         
         if (verifyResponse.data.success) {
@@ -76,7 +77,7 @@ export function PaymentModal({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                email: userEmail
+                deviceId: deviceId
               });
               
               if (verifyResponse.data.success) {
@@ -90,7 +91,7 @@ export function PaymentModal({
             }
           },
           prefill: {
-            email: userEmail,
+            email: 'user@example.com', // Default email for Razorpay
           },
           theme: {
             color: "#2563eb",

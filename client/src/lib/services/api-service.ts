@@ -22,6 +22,7 @@ export interface ResumeAnalysisResponse {
   processingDetails?: Record<string, unknown>;
   error?: string;
   requiresPayment?: boolean;
+  deviceId?: string;
   analysisCount?: number;
 }
 
