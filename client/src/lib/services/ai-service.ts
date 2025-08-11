@@ -53,7 +53,7 @@ export interface AIJobSearchResponse {
 // AI Service class
 class AIService {
   // Resume analysis using AI
-  async analyzeResume(request: AIAnalysisRequest): Promise<AIAnalysisResponse> {
+  async analyzeResume(_request: AIAnalysisRequest): Promise<AIAnalysisResponse> {
     try {
       // This would integrate with the AI service
       // For now, return a mock response
@@ -76,20 +76,20 @@ class AIService {
           keywords: ['leadership', 'project management', 'data analysis'],
         },
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Analysis failed',
+        error: 'Analysis failed',
       };
     }
   }
 
   // Chat with AI
-  async chat(request: AIChatRequest): Promise<AIChatResponse> {
+  async chat(_request: AIChatRequest): Promise<AIChatResponse> {
     try {
-      const response = await apiService.chatWithAI(request.message, {
-        history: request.history,
-        context: request.context,
+      const response = await apiService.chatWithAI(_request.message, {
+        history: _request.history,
+        context: _request.context,
       });
       
       return {

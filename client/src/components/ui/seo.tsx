@@ -20,7 +20,7 @@ interface SEOProps {
   twitterCreator?: string;
   twitterSite?: string;
   canonicalUrl?: string;
-  structuredData?: any;
+  structuredData?: Record<string, unknown>;
   breadcrumbs?: Array<{ name: string; url: string }>;
 }
 

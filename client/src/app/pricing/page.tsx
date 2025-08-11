@@ -124,7 +124,7 @@ export default function PricingPage() {
                 Simple, Transparent Pricing
               </h1>
               <p className="mt-6 text-xl text-gray-600 dark:text-gray-400">
-                Choose the plan that fits your career goals. Start free and upgrade when you're ready.
+                Choose the plan that fits your career goals. Start free and upgrade when you&apos;re ready.
               </p>
             </div>
           </div>
@@ -209,7 +209,7 @@ export default function PricingPage() {
                     Can I cancel my subscription anytime?
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Yes, you can cancel your subscription at any time. You'll continue to have access to your plan until the end of your billing period.
+                    Yes, you can cancel your subscription at any time. You&apos;ll continue to have access to your plan until the end of your billing period.
                   </p>
                 </div>
                 
@@ -236,7 +236,7 @@ export default function PricingPage() {
                     Do you offer refunds?
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
-                    We offer a 30-day money-back guarantee. If you're not satisfied with our service, contact us for a full refund.
+                    We offer a 30-day money-back guarantee. If you&apos;re not satisfied with our service, contact us for a full refund.
                   </p>
                 </div>
               </div>

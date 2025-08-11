@@ -46,8 +46,6 @@ interface ResumeAnalysisProps {
 
 export function ResumeAnalysis({ analysisResults, resumeText, onContentUpdate }: ResumeAnalysisProps) {
   const [activeTab, setActiveTab] = useState<"score" | "content">("score");
-  const [hoveredLine, setHoveredLine] = useState<number | null>(null);
-  const [editingLine, setEditingLine] = useState<number | null>(null);
   const [editContent, setEditContent] = useState("");
   const [resumeLines, setResumeLines] = useState<string[]>(resumeText.split("\n"));
   
@@ -133,7 +131,7 @@ ${missingSections.length > 0 ? missingSections.join(', ') : 'None detected'}
 
 IMPROVEMENT OPPORTUNITIES:
 ${Object.entries(analysisResults.sectionScores)
-  .filter(([_, score]) => score < 80)
+  .filter(([section, score]) => score < 80)
   .map(([section, score]) => `${section.replace(/([A-Z])/g, ' $1').trim()}: ${score}/100 - ${analysisResults.suggestions[section as keyof typeof analysisResults.suggestions]}`)
   .join('\n')}
 
@@ -154,14 +152,6 @@ Generated on: ${new Date().toLocaleString()}
     window.URL.revokeObjectURL(url);
   };
   
-  const handleLineClick = (lineIndex: number, suggestions: string[] | null) => {
-    if (suggestions && suggestions.length > 0) {
-      // If there are multiple suggestions, use the first one as default
-      setEditingLine(lineIndex);
-      setEditContent(suggestions[0]);
-    }
-  };
-  
   const handleSaveEdit = (lineIndex: number) => {
     if (onContentUpdate) {
       const updatedLines = [...resumeLines];
@@ -170,12 +160,10 @@ Generated on: ${new Date().toLocaleString()}
       onContentUpdate(updatedText);
     }
     
-    setEditingLine(null);
     setEditContent("");
   };
   
   const handleCancelEdit = () => {
-    setEditingLine(null);
     setEditContent("");
   };
 
@@ -479,7 +467,7 @@ Generated on: ${new Date().toLocaleString()}
                   <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Improvement Opportunities</h3>
                   <ul className="space-y-4">
                     {Object.entries(analysisResults.sectionScores)
-                      .filter(([_, score]) => score < 80)
+                      .filter(([section, score]) => score < 80)
                       .map(([section, score]) => (
                         <li key={section} className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                           <div className={`mt-0.5 h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 ${
