@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 export interface ResumeRecord {
   id?: number;
@@ -32,14 +33,28 @@ class DatabaseService {
   private db: Database.Database;
 
   constructor() {
-    // Initialize database in the server directory
-    const dbPath = join(__dirname, '../../data/resumes.db');
-    this.db = new Database(dbPath);
-    
-    // Enable WAL mode for better performance
-    this.db.pragma('journal_mode = WAL');
-    
-    this.initializeTables();
+    try {
+      // Initialize database in the server directory
+      const dbPath = join(__dirname, '../../data/resumes.db');
+      
+      // Ensure the data directory exists
+      const dataDir = dirname(dbPath);
+      if (!existsSync(dataDir)) {
+        console.log(`📁 Creating data directory: ${dataDir}`);
+        mkdirSync(dataDir, { recursive: true });
+      }
+      
+      console.log(`🗄️ Initializing database at: ${dbPath}`);
+      this.db = new Database(dbPath);
+      
+      // Enable WAL mode for better performance
+      this.db.pragma('journal_mode = WAL');
+      
+      this.initializeTables();
+    } catch (error) {
+      console.error('❌ Failed to initialize database:', error);
+      throw new Error(`Database initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   private initializeTables() {
