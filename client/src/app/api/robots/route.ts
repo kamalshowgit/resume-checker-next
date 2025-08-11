@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
+  const baseUrl = 'https://resume-checker-next-g06ujx32w-kamalsoniatvercels-projects.vercel.app';
+  
   const robotsTxt = `User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://resumecheck.com/sitemap.xml
+Sitemap: ${baseUrl}/sitemap.xml
 
 # Disallow admin and API routes
 Disallow: /admin

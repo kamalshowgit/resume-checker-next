@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { getApiUrl, isProductionConfigured } from '../config';
 
 // API Response types
 export interface ResumeAnalysisResponse {
@@ -52,7 +53,16 @@ class APIService {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    this.baseURL = getApiUrl();
+    
+    // Log configuration status
+    if (!isProductionConfigured()) {
+      console.warn('⚠️  Production URLs not configured. Please set NEXT_PUBLIC_API_URL and NEXT_PUBLIC_APP_URL environment variables.');
+      console.warn('Current API URL:', this.baseURL);
+    } else {
+      console.log('✅ Production configuration detected. API URL:', this.baseURL);
+    }
+    
     this.api = axios.create({
       baseURL: this.baseURL,
       timeout: 30000,

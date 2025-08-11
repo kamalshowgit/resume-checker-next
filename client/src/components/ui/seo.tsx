@@ -46,7 +46,7 @@ export const SEO: React.FC<SEOProps> = ({
   structuredData,
   breadcrumbs = [],
 }) => {
-  const baseUrl = 'https://resumecheck.com';
+  const baseUrl = 'https://resume-checker-next-g06ujx32w-kamalsoniatvercels-projects.vercel.app';
   const fullTitle = title.includes('ResumeCheck') ? title : `${title} | ResumeCheck`;
   
   // Default values

@@ -32,14 +32,14 @@ export const metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://resumecheck.com'),
+  metadataBase: new URL('https://resume-checker-next-g06ujx32w-kamalsoniatvercels-projects.vercel.app'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://resumecheck.com',
+    url: 'https://resume-checker-next-g06ujx32w-kamalsoniatvercels-projects.vercel.app',
     siteName: 'ResumeCheck',
     title: 'ResumeCheck - AI Resume Analysis & Career Guidance',
     description: 'Professional AI-powered resume analysis tool with section-by-section scoring, ATS optimization, and personalized career guidance.',

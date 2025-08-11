@@ -5,6 +5,7 @@ import { ResumeProvider, useResumeContext } from "../lib/context/resume-context"
 import ContextAwareUploader from "../components/resume/context-aware-uploader";
 import ContextAwareChatbot from "../components/resume/context-aware-chatbot";
 import { ResumeAnalysis } from "../components/resume/resume-analysis";
+import { ConnectionTest } from "../components/ui/connection-test";
 import Head from "next/head";
 
 const HomeContent = () => {
@@ -85,6 +86,13 @@ const HomeContent = () => {
               Get detailed resume analysis with section-by-section scores and AI-powered career advice.
             </p>
           </div>
+
+          {/* Connection Test Section - Only show in development/preview */}
+          {process.env.NODE_ENV === 'development' || window.location.hostname.includes('vercel.app') && (
+            <div className="mb-8">
+              <ConnectionTest />
+            </div>
+          )}
 
           {/* Main Content */}
           <div className="flex flex-col">
