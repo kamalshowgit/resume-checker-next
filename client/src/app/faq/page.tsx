@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { Footer } from "@/components/ui/footer";
-import { Header } from "@/components/ui/header";
 import { SEO } from "@/components/ui/seo";
 import { FiChevronDown, FiChevronUp, FiSearch, FiHelpCircle } from "react-icons/fi";
 
@@ -138,8 +137,6 @@ export default function FAQPage() {
       />
       
       <main className="flex min-h-screen flex-col bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-50">
-        <Header />
-        
         {/* Hero Section */}
         <section className="border-b border-gray-200 dark:border-gray-800">
           <div className="container mx-auto px-4 py-16 md:py-24">
