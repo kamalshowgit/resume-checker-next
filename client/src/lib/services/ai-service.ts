@@ -53,7 +53,7 @@ export interface AIJobSearchResponse {
 // AI Service class
 class AIService {
   // Resume analysis using AI
-  async analyzeResume(_request: AIAnalysisRequest): Promise<AIAnalysisResponse> {
+  async analyzeResume(): Promise<AIAnalysisResponse> {
     try {
       // This would integrate with the AI service
       // For now, return a mock response
@@ -85,11 +85,11 @@ class AIService {
   }
 
   // Chat with AI
-  async chat(_request: AIChatRequest): Promise<AIChatResponse> {
+  async chat(): Promise<AIChatResponse> {
     try {
-      const response = await apiService.chatWithAI(_request.message, {
-        history: _request.history,
-        context: _request.context,
+      const response = await apiService.chatWithAI("", {
+        history: [],
+        context: {},
       });
       
       return {

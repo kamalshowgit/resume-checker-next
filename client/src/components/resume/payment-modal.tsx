@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FiX, FiCreditCard, FiShield, FiCheck } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiX, FiCheck, FiCreditCard, FiLock } from "react-icons/fi";
 import axios from "axios";
 
 interface PaymentModalProps {
@@ -70,7 +70,7 @@ export function PaymentModal({
           name: "ResumeCheck",
           description: "Resume Analysis Service",
           order_id: orderResponse.data.id,
-          handler: async function (response: any) {
+          handler: async function (response: Record<string, string>) {
             try {
               // Verify payment
               const verifyResponse = await axios.post("http://localhost:5000/api/pay/verify", {
@@ -98,7 +98,7 @@ export function PaymentModal({
           },
         };
 
-        const razorpay = new (window as any).Razorpay(options);
+        const razorpay = new ((window as unknown) as { Razorpay: new (options: Record<string, unknown>) => { open: () => void } }).Razorpay(options);
         razorpay.open();
       }
       
@@ -142,7 +142,7 @@ export function PaymentModal({
             <div className="flex items-center space-x-2">
               <FiCheck className="h-5 w-5 text-blue-600" />
               <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                You've used {analysisCount} analysis{analysisCount > 1 ? 'es' : ''}
+                You&apos;ve used {analysisCount} analysis{analysisCount > 1 ? 'es' : ''}
               </span>
             </div>
             <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">

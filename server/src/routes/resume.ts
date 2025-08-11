@@ -694,9 +694,9 @@ const ChatSchema = z.object({
   message: z.string().min(1),
   context: z.object({
     resumeData: z.any().optional(),
-    currentScore: z.number().optional(),
-    keyPoints: z.array(z.string()).optional(),
-    recentActions: z.array(z.any()).optional(),
+    currentScore: z.number().optional().or(z.undefined()),
+    keyPoints: z.array(z.string()).optional().or(z.undefined()),
+    recentActions: z.array(z.any()).optional().or(z.undefined()),
     userSession: z.any().optional(),
   }).optional(),
 });

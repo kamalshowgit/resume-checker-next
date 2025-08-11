@@ -233,28 +233,28 @@ const ContextAwareUploader: React.FC = () => {
           analysis: {
             overallScore: response.atsScore || 0,
             sectionScores: {
-              summary: (response.atsBreakdown as any)?.summary || 0,
-              workExperience: (response.atsBreakdown as any)?.experience || 0,
-              skills: (response.atsBreakdown as any)?.skills || 0,
-              education: (response.atsBreakdown as any)?.education || 0,
-              achievements: (response.atsBreakdown as any)?.achievements || 0,
-              contactInfo: (response.atsBreakdown as any)?.contactInfo || 0,
-              certifications: (response.atsBreakdown as any)?.certifications || 0,
-              languages: (response.atsBreakdown as any)?.languages || 0,
-              projects: (response.atsBreakdown as any)?.projects || 0,
-              volunteerWork: (response.atsBreakdown as any)?.volunteerWork || 0,
+              summary: (response.atsBreakdown as Record<string, unknown>)?.summary as number || 0,
+              workExperience: (response.atsBreakdown as Record<string, unknown>)?.experience as number || 0,
+              skills: (response.atsBreakdown as Record<string, unknown>)?.skills as number || 0,
+              education: (response.atsBreakdown as Record<string, unknown>)?.education as number || 0,
+              achievements: (response.atsBreakdown as Record<string, unknown>)?.achievements as number || 0,
+              contactInfo: (response.atsBreakdown as Record<string, unknown>)?.contactInfo as number || 0,
+              certifications: (response.atsBreakdown as Record<string, unknown>)?.certifications as number || 0,
+              languages: (response.atsBreakdown as Record<string, unknown>)?.languages as number || 0,
+              projects: (response.atsBreakdown as Record<string, unknown>)?.projects as number || 0,
+              volunteerWork: (response.atsBreakdown as Record<string, unknown>)?.volunteerWork as number || 0,
             },
             suggestions: {
-              summary: (response.atsSuggestions as any)?.summary || 'Add a concise professional summary highlighting your key strengths.',
-              workExperience: (response.atsSuggestions as any)?.experience || 'Include quantifiable achievements in your work experience.',
-              skills: (response.atsSuggestions as any)?.skills || 'Add more industry-specific technical and soft skills.',
-              education: (response.atsSuggestions as any)?.education || 'Format education section consistently with degrees and dates.',
-              achievements: (response.atsSuggestions as any)?.achievements || 'Add measurable achievements with specific metrics.',
-              contactInfo: (response.atsSuggestions as any)?.contactInfo || 'Ensure contact information is complete and professional.',
-              certifications: (response.atsSuggestions as any)?.certifications || 'Add relevant professional certifications and training.',
-              languages: (response.atsSuggestions as any)?.languages || 'Include language proficiencies if relevant to the role.',
-              projects: (response.atsSuggestions as any)?.projects || 'Highlight key projects with measurable outcomes.',
-              volunteerWork: (response.atsSuggestions as any)?.volunteerWork || 'Include volunteer experience that demonstrates relevant skills.',
+              summary: (response.atsSuggestions as Record<string, unknown>)?.summary as string || 'Add a concise professional summary highlighting your key strengths.',
+              workExperience: (response.atsSuggestions as Record<string, unknown>)?.experience as string || 'Include quantifiable achievements in your work experience.',
+              skills: (response.atsSuggestions as Record<string, unknown>)?.skills as string || 'Add more industry-specific technical and soft skills.',
+              education: (response.atsSuggestions as Record<string, unknown>)?.education as string || 'Format education section consistently with degrees and dates.',
+              achievements: (response.atsSuggestions as Record<string, unknown>)?.achievements as string || 'Add measurable achievements with specific metrics.',
+              contactInfo: (response.atsSuggestions as Record<string, unknown>)?.contactInfo as string || 'Ensure contact information is complete and professional.',
+              certifications: (response.atsSuggestions as Record<string, unknown>)?.certifications as string || 'Add relevant professional certifications and training.',
+              languages: (response.atsSuggestions as Record<string, unknown>)?.languages as string || 'Include language proficiencies if relevant to the role.',
+              projects: (response.atsSuggestions as Record<string, unknown>)?.projects as string || 'Highlight key projects with measurable outcomes.',
+              volunteerWork: (response.atsSuggestions as Record<string, unknown>)?.volunteerWork as string || 'Include volunteer experience that demonstrates relevant skills.',
             },
             improvedContent: response.improvedContent,
             jobProfiles: response.jobProfiles || [],
@@ -396,7 +396,7 @@ const ContextAwareUploader: React.FC = () => {
                 </button>
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                We'll analyze it and provide personalized recommendations
+                We&apos;ll analyze it and provide personalized recommendations
               </p>
             </div>
           </div>

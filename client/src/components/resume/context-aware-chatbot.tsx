@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { FiSend, FiTarget, FiTrendingUp, FiFileText, FiMessageCircle, FiX, FiMinimize2, FiMaximize2, FiUser, FiMessageSquare } from "react-icons/fi";
+import React, { useState, useRef, useEffect } from "react";
+import { FiMessageCircle, FiSend, FiUser, FiMessageSquare, FiChevronDown, FiChevronUp, FiMinimize2, FiMaximize2 } from "react-icons/fi";
 import { apiService } from "../../lib/services/api-service";
 import { useResumeContext } from "../../lib/context/resume-context";
 
@@ -329,7 +329,7 @@ const ContextAwareChatbot: React.FC = () => {
               <div className="flex items-center space-x-2">
                 {state.resumeData && (
                   <div className="flex items-center mr-2 bg-blue-700 rounded-full px-2 py-0.5 text-xs">
-                    <FiFileText className="h-3 w-3 mr-1" />
+                    <FiMessageSquare className="h-3 w-3 mr-1" />
                     <span>
                       {state.resumeData.atsScore || 'N/A'}%
                     </span>
@@ -363,7 +363,7 @@ const ContextAwareChatbot: React.FC = () => {
                 >
                   {message.sender === "bot" && (
                     <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center mr-2 flex-shrink-0">
-                      <FiMessageCircle className="h-4 w-4 text-white" />
+                      <FiMessageSquare className="h-4 w-4 text-white" />
                     </div>
                   )}
                   <div
@@ -396,7 +396,7 @@ const ContextAwareChatbot: React.FC = () => {
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center mr-2 flex-shrink-0">
-                    <FiMessageCircle className="h-4 w-4 text-white" />
+                    <FiMessageSquare className="h-4 w-4 text-white" />
                   </div>
                   <div className="max-w-[75%] rounded-lg bg-white px-3 py-2 shadow-sm dark:bg-gray-800 rounded-tl-none">
                     <div className="flex space-x-2">

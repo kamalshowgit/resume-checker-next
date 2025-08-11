@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { FiAlertTriangle, FiCheckCircle, FiInfo, FiEdit3, FiCheck, FiX } from "react-icons/fi";
-import React from "react"; // Added missing import
+import React, { useState } from "react";
+import { FiAlertTriangle, FiCheckCircle, FiDownload, FiInfo, FiStar } from "react-icons/fi";
 
 interface ResumeAnalysisProps {
   analysisResults: {
@@ -68,7 +67,7 @@ export function ResumeAnalysis({ analysisResults, resumeText, onContentUpdate }:
     
     // Grammar checks
     if (lineContent.includes("i ") && !lineContent.includes("I ")) {
-      suggestions.push("Capitalize 'I' when referring to yourself");
+      suggestions.push("Capitalize &apos;I&apos; when referring to yourself");
     }
     if (lineContent.includes("  ")) {
       suggestions.push("Remove extra spaces");
@@ -131,7 +130,7 @@ ${missingSections.length > 0 ? missingSections.join(', ') : 'None detected'}
 
 IMPROVEMENT OPPORTUNITIES:
 ${Object.entries(analysisResults.sectionScores)
-  .filter(([section, score]) => score < 80)
+  .filter(([, score]) => score < 80)
   .map(([section, score]) => `${section.replace(/([A-Z])/g, ' $1').trim()}: ${score}/100 - ${analysisResults.suggestions[section as keyof typeof analysisResults.suggestions]}`)
   .join('\n')}
 
@@ -152,21 +151,6 @@ Generated on: ${new Date().toLocaleString()}
     window.URL.revokeObjectURL(url);
   };
   
-  const handleSaveEdit = (lineIndex: number) => {
-    if (onContentUpdate) {
-      const updatedLines = [...resumeLines];
-      updatedLines[lineIndex] = editContent;
-      const updatedText = updatedLines.join('\n');
-      onContentUpdate(updatedText);
-    }
-    
-    setEditContent("");
-  };
-  
-  const handleCancelEdit = () => {
-    setEditContent("");
-  };
-
   const getSectionScoreColor = (score: number) => {
     if (score >= 80) return "text-green-500 dark:text-green-400";
     if (score >= 60) return "text-yellow-500 dark:text-yellow-400";
@@ -467,7 +451,7 @@ Generated on: ${new Date().toLocaleString()}
                   <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Improvement Opportunities</h3>
                   <ul className="space-y-4">
                     {Object.entries(analysisResults.sectionScores)
-                      .filter(([section, score]) => score < 80)
+                      .filter(([, score]) => score < 80)
                       .map(([section, score]) => (
                         <li key={section} className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                           <div className={`mt-0.5 h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -557,7 +541,7 @@ Generated on: ${new Date().toLocaleString()}
                   <div>
                     <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300">AI-Powered Resume Review</h3>
                     <p className="text-blue-700 dark:text-blue-400">
-                      Your resume has been analyzed by AI. Below you'll find detailed suggestions for each section with explanations of why these improvements matter.
+                      Your resume has been analyzed by AI. Below you&apos;ll find detailed suggestions for each section with explanations of why these improvements matter.
                     </p>
                   </div>
                 </div>
@@ -769,7 +753,7 @@ Generated on: ${new Date().toLocaleString()}
                                       {section}
                                     </h4>
                                     <p className="text-xs text-purple-700 dark:text-purple-400">
-                                      Adding this section will improve your resume's completeness and ATS compatibility.
+                                      Adding this section will improve your resume&apos;s completeness and ATS compatibility.
                                     </p>
                                   </div>
                                 </div>

@@ -226,7 +226,7 @@ export default function TermsPage() {
               </h2>
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <p className="text-sm text-gray-600">
-                  Our service is provided "as is" without warranties of any kind. We disclaim all warranties, 
+                  Our service is provided &quot;as is&quot; without warranties of any kind. We disclaim all warranties, 
                   express or implied, including but not limited to merchantability, fitness for a particular purpose, 
                   and non-infringement.
                 </p>

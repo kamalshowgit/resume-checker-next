@@ -84,7 +84,7 @@ export const SEO: React.FC<SEOProps> = ({
 
   // Merge breadcrumbs if available
   if (breadcrumbData) {
-    defaultStructuredData.breadcrumb = breadcrumbData;
+    (defaultStructuredData as Record<string, unknown>).breadcrumb = breadcrumbData;
   }
 
   const finalStructuredData = structuredData || defaultStructuredData;

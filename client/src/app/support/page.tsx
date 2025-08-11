@@ -11,7 +11,7 @@ export default function SupportPage() {
               Support Center
             </h1>
             <p className="text-lg text-gray-600">
-              We're here to help you succeed with ResumeCheck
+              We&apos;re here to help you succeed with ResumeCheck
             </p>
           </div>
 
@@ -115,7 +115,7 @@ export default function SupportPage() {
                   </h3>
                   <div className="space-y-2">
                     <p className="text-sm text-gray-600">
-                      <strong>Problem:</strong> Can't upload your resume?
+                      <strong>Problem:</strong> Can&apos;t upload your resume?
                     </p>
                     <ul className="text-sm text-gray-600 space-y-1 ml-4">
                       <li>• Check file size (max 10MB)</li>
@@ -173,7 +173,7 @@ export default function SupportPage() {
                   </h3>
                   <p className="text-sm text-gray-600">
                     Our AI provides helpful insights based on industry best practices.
-                    While it's very good, always review suggestions before applying them to your resume.
+                    While it&apos;s very good, always review suggestions before applying them to your resume.
                   </p>
                 </div>
 
@@ -253,7 +253,7 @@ export default function SupportPage() {
                     <ul className="text-sm text-gray-600 space-y-1 ml-4">
                       <li>• Your email address</li>
                       <li>• Description of the problem</li>
-                      <li>• Steps you've already tried</li>
+                      <li>• Steps you&apos;ve already tried</li>
                       <li>• Screenshots if helpful</li>
                     </ul>
                   </div>

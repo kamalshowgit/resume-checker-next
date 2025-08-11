@@ -114,7 +114,7 @@ export default function PrivacyPage() {
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• Service providers who help us operate (hosting, analytics)</li>
                     <li>• Legal requirements or law enforcement requests</li>
-                    <li>• Business transfers (if we're acquired or merged)</li>
+                    <li>• Business transfers (if we&apos;re acquired or merged)</li>
                     <li>• With your explicit consent</li>
                   </ul>
                 </div>
@@ -184,7 +184,7 @@ export default function PrivacyPage() {
             {/* Children's Privacy */}
             <section className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                Children's Privacy
+                Children&apos;s Privacy
               </h2>
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <p className="text-sm text-gray-600">
