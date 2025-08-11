@@ -573,7 +573,17 @@ IMPORTANT:
     throw new Error('AI service returned no content. Please try again.');
   } catch (error) {
     console.error('[ATS Score] Error:', error);
-    throw error; // Re-throw the error instead of falling back
+    
+    // Fallback to rule-based scoring if AI fails
+    console.log('[ATS Score] AI analysis failed, using fallback scoring...');
+    try {
+      const fallbackResult = calculateFallbackATSScore(text);
+      console.log('[ATS Score] Fallback scoring completed successfully');
+      return fallbackResult;
+    } catch (fallbackError) {
+      console.error('[ATS Score] Fallback scoring also failed:', fallbackError);
+      throw new Error('Both AI and fallback scoring failed. Please try again.');
+    }
   }
 }
 
@@ -986,7 +996,12 @@ function calculateFallbackATSScore(text: string) {
   }
 
   console.log(`[FallbackATS] Calculated score: ${score}, Breakdown:`, breakdown);
-  return { score, breakdown, suggestions };
+  return { 
+    score, 
+    breakdown, 
+    suggestions,
+    jobProfiles: [] // Empty array for fallback scoring
+  };
 }
 
 // Function to detect which sections actually exist in the resume

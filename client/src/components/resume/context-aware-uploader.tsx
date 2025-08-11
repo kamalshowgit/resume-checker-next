@@ -125,6 +125,109 @@ const ContextAwareUploader: React.FC = () => {
     return tips;
   };
 
+  // Map backend suggestions to frontend format
+  const mapSuggestions = (atsSuggestions: any): {
+    summary: string;
+    workExperience: string;
+    skills: string;
+    education: string;
+    achievements: string;
+    contactInfo: string;
+    certifications: string;
+    languages: string;
+    projects: string;
+    volunteerWork: string;
+  } => {
+    if (!atsSuggestions || !Array.isArray(atsSuggestions)) {
+      return {
+        summary: 'Add a concise professional summary highlighting your key strengths.',
+        workExperience: 'Include quantifiable achievements in your work experience.',
+        skills: 'Add more industry-specific technical and soft skills.',
+        education: 'Format education section consistently with degrees and dates.',
+        achievements: 'Add measurable achievements with specific metrics.',
+        contactInfo: 'Ensure contact information is complete and professional.',
+        certifications: 'Add relevant professional certifications and training.',
+        languages: 'Include language proficiencies if relevant to the role.',
+        projects: 'Highlight key projects with measurable outcomes.',
+        volunteerWork: 'Include volunteer experience that demonstrates relevant skills.',
+      };
+    }
+
+    const mappedSuggestions: {
+      summary: string;
+      workExperience: string;
+      skills: string;
+      education: string;
+      achievements: string;
+      contactInfo: string;
+      certifications: string;
+      languages: string;
+      projects: string;
+      volunteerWork: string;
+    } = {
+      summary: 'Add a concise professional summary highlighting your key strengths.',
+      workExperience: 'Include quantifiable achievements in your work experience.',
+      skills: 'Add more industry-specific technical and soft skills.',
+      education: 'Format education section consistently with degrees and dates.',
+      achievements: 'Add measurable achievements with specific metrics.',
+      contactInfo: 'Ensure contact information is complete and professional.',
+      certifications: 'Add relevant professional certifications and training.',
+      languages: 'Include language proficiencies if relevant to the role.',
+      projects: 'Highlight key projects with measurable outcomes.',
+      volunteerWork: 'Include volunteer experience that demonstrates relevant skills.',
+    };
+
+    // Map backend suggestions to frontend categories
+    atsSuggestions.forEach((suggestion: any) => {
+      const category = suggestion.category?.toLowerCase();
+      if (category) {
+        switch (category) {
+          case 'keywords':
+            mappedSuggestions.summary = suggestion.suggestion || mappedSuggestions.summary;
+            break;
+          case 'experience':
+            mappedSuggestions.workExperience = suggestion.suggestion || mappedSuggestions.workExperience;
+            break;
+          case 'skills':
+            mappedSuggestions.skills = suggestion.suggestion || mappedSuggestions.skills;
+            break;
+          case 'education':
+            mappedSuggestions.education = suggestion.suggestion || mappedSuggestions.education;
+            break;
+          case 'achievements':
+            mappedSuggestions.achievements = suggestion.suggestion || mappedSuggestions.achievements;
+            break;
+          case 'contactinfo':
+          case 'contact_info':
+            mappedSuggestions.contactInfo = suggestion.suggestion || mappedSuggestions.contactInfo;
+            break;
+          case 'certifications':
+            mappedSuggestions.certifications = suggestion.suggestion || mappedSuggestions.certifications;
+            break;
+          case 'languages':
+            mappedSuggestions.languages = suggestion.suggestion || mappedSuggestions.languages;
+            break;
+          case 'projects':
+            mappedSuggestions.projects = suggestion.suggestion || mappedSuggestions.projects;
+            break;
+          case 'volunteerwork':
+          case 'volunteer_work':
+            mappedSuggestions.volunteerWork = suggestion.suggestion || mappedSuggestions.volunteerWork;
+            break;
+          case 'formatting':
+            // Apply formatting suggestions to multiple sections
+            if (suggestion.suggestion) {
+              mappedSuggestions.summary = suggestion.suggestion;
+              mappedSuggestions.workExperience = suggestion.suggestion;
+            }
+            break;
+        }
+      }
+    });
+
+    return mappedSuggestions;
+  };
+
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -233,7 +336,7 @@ const ContextAwareUploader: React.FC = () => {
           analysis: {
             overallScore: response.atsScore || 0,
             sectionScores: {
-              summary: (response.atsBreakdown as Record<string, unknown>)?.summary as number || 0,
+              summary: (response.atsBreakdown as Record<string, unknown>)?.keywords as number || 0,
               workExperience: (response.atsBreakdown as Record<string, unknown>)?.experience as number || 0,
               skills: (response.atsBreakdown as Record<string, unknown>)?.skills as number || 0,
               education: (response.atsBreakdown as Record<string, unknown>)?.education as number || 0,
@@ -244,18 +347,7 @@ const ContextAwareUploader: React.FC = () => {
               projects: (response.atsBreakdown as Record<string, unknown>)?.projects as number || 0,
               volunteerWork: (response.atsBreakdown as Record<string, unknown>)?.volunteerWork as number || 0,
             },
-            suggestions: {
-              summary: (response.atsSuggestions as Record<string, unknown>)?.summary as string || 'Add a concise professional summary highlighting your key strengths.',
-              workExperience: (response.atsSuggestions as Record<string, unknown>)?.experience as string || 'Include quantifiable achievements in your work experience.',
-              skills: (response.atsSuggestions as Record<string, unknown>)?.skills as string || 'Add more industry-specific technical and soft skills.',
-              education: (response.atsSuggestions as Record<string, unknown>)?.education as string || 'Format education section consistently with degrees and dates.',
-              achievements: (response.atsSuggestions as Record<string, unknown>)?.achievements as string || 'Add measurable achievements with specific metrics.',
-              contactInfo: (response.atsSuggestions as Record<string, unknown>)?.contactInfo as string || 'Ensure contact information is complete and professional.',
-              certifications: (response.atsSuggestions as Record<string, unknown>)?.certifications as string || 'Add relevant professional certifications and training.',
-              languages: (response.atsSuggestions as Record<string, unknown>)?.languages as string || 'Include language proficiencies if relevant to the role.',
-              projects: (response.atsSuggestions as Record<string, unknown>)?.projects as string || 'Highlight key projects with measurable outcomes.',
-              volunteerWork: (response.atsSuggestions as Record<string, unknown>)?.volunteerWork as string || 'Include volunteer experience that demonstrates relevant skills.',
-            },
+            suggestions: mapSuggestions(response.atsSuggestions),
             improvedContent: response.improvedContent,
             jobProfiles: response.jobProfiles || [],
           },
