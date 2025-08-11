@@ -3,17 +3,17 @@ import { join } from 'path';
 
 export interface ResumeRecord {
   id?: number;
-  name?: string;
-  email?: string;
-  phone?: string;
-  linkedin?: string;
-  location?: string;
-  role?: string;
-  experienceYears?: number;
-  skills?: string; // JSON string
-  education?: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  linkedin?: string | null;
+  location?: string | null;
+  role?: string | null;
+  experienceYears?: number | null;
+  skills?: string | null; // JSON string
+  education?: string | null;
   resumeText: string;
-  extractedData?: string; // JSON string of all extracted data
+  extractedData?: string | null; // JSON string of all extracted data
   createdAt?: string;
   updatedAt?: string;
 }

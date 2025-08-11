@@ -256,9 +256,9 @@ export async function chatSuggest(
   message: string,
   context?: {
     resumeData?: any;
-    currentScore?: number;
-    keyPoints?: string[];
-    recentActions?: any[];
+    currentScore?: number | undefined;
+    keyPoints?: string[] | undefined;
+    recentActions?: any[] | undefined;
     userSession?: any;
   }
 ): Promise<string> {
