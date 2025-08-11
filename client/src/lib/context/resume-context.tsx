@@ -45,6 +45,7 @@ export interface ResumeData {
   resumeId: string;
   filename: string;
   lastModified: Date;
+  version?: number;
 }
 
 export interface UserSession {

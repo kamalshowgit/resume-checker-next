@@ -98,7 +98,7 @@ export default function ContactPage() {
                 Get in Touch
               </h1>
               <p className="mt-6 text-xl text-gray-600 dark:text-gray-400">
-                Have questions about resume analysis? Need help with your account? We're here to help you succeed.
+                Have questions about resume analysis? Need help with your account? We&apos;re here to help you succeed.
               </p>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function ContactPage() {
                   Send us a Message
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400">
-                  Fill out the form below and we'll get back to you within 24 hours.
+                  Fill out the form below and we&apos;ll get back to you within 24 hours.
                 </p>
               </div>
               

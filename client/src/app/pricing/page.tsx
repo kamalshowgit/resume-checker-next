@@ -4,7 +4,7 @@ import React from "react";
 import { Footer } from "@/components/ui/footer";
 import { Header } from "@/components/ui/header";
 import { SEO } from "@/components/ui/seo";
-import { FiCheck, FiStar, FiZap } from "react-icons/fi";
+import { FiCheck, FiStar } from "react-icons/fi";
 
 export default function PricingPage() {
   const pricingPlans = [
@@ -135,7 +135,7 @@ export default function PricingPage() {
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-6xl">
               <div className="grid md:grid-cols-3 gap-8">
-                {pricingPlans.map((plan, index) => (
+                {pricingPlans.map((plan) => (
                   <div
                     key={plan.name}
                     className={`relative rounded-2xl border-2 p-8 ${

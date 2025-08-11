@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const robotsTxt = `User-agent: *
 Allow: /
 
@@ -8,29 +8,25 @@ Allow: /
 Sitemap: https://resumecheck.com/sitemap.xml
 
 # Disallow admin and API routes
-Disallow: /api/admin/
-Disallow: /api/payment/
-Disallow: /_next/
-Disallow: /static/
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /api/payment
+Disallow: /api/chat
 
-# Allow important pages
+# Allow public routes
 Allow: /
 Allow: /about
-Allow: /pricing
 Allow: /contact
 Allow: /faq
-Allow: /support
+Allow: /pricing
 Allow: /privacy
 Allow: /terms
-Allow: /legal
-
-# Crawl delay (optional)
-Crawl-delay: 1`;
+Allow: /support
+Allow: /legal`;
 
   return new NextResponse(robotsTxt, {
     headers: {
-      'Content-Type': 'text/plain',
-      'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+      "Content-Type": "text/plain",
     },
   });
 }

@@ -69,7 +69,7 @@ export const SEO: React.FC<SEOProps> = ({
   } : null;
 
   // Default structured data if none provided
-  const defaultStructuredData = {
+  const defaultStructuredData: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "WebPage",
     "name": fullTitle,
@@ -108,7 +108,7 @@ export const SEO: React.FC<SEOProps> = ({
       <meta property="og:description" content={finalOgDescription} />
       <meta property="og:type" content={ogType} />
       <meta property="og:url" content={finalOgUrl} />
-      <meta property="og:image" content={finalOgImage} />
+      <meta property="og:image" content={ogImage} />
       <meta property="og:site_name" content={ogSiteName} />
       <meta property="og:locale" content="en_US" />
       

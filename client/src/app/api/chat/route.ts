@@ -33,10 +33,11 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
-    } catch (apiError: any) {
+    } catch (apiError: unknown) {
       console.error("API service error:", apiError);
+      const errorMessage = apiError instanceof Error ? apiError.message : "Failed to communicate with the chat service";
       return NextResponse.json(
-        { error: apiError.message || "Failed to communicate with the chat service" },
+        { error: errorMessage },
         { status: 503 }
       );
     }
