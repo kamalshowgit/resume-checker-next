@@ -1,79 +1,36 @@
 "use client";
 
-import React from "react";
-import { ResumeProvider, useResumeContext } from "../lib/context/resume-context";
-import ContextAwareUploader from "../components/resume/context-aware-uploader";
-import ContextAwareChatbot from "../components/resume/context-aware-chatbot";
-import { ResumeAnalysis } from "../components/resume/resume-analysis";
-import { ConnectionTest } from "../components/ui/connection-test";
-import Head from "next/head";
+import { useState, useEffect } from 'react';
+import { SEO } from '@/components/ui/seo';
+import ContextAwareUploader from '@/components/resume/context-aware-uploader';
+import ContextAwareChatbot from '@/components/resume/context-aware-chatbot';
+import { ResumeAnalysis } from '@/components/resume/resume-analysis';
+import { ConnectionTest } from '@/components/ui/connection-test';
+import { useResumeContext, ResumeProvider } from '@/lib/context/resume-context';
 
 const HomeContent = () => {
   const { state } = useResumeContext();
-  
+  const [isVercelPreview, setIsVercelPreview] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    // Check if we're on Vercel preview
+    if (typeof window !== 'undefined') {
+      setIsVercelPreview(window.location.hostname.includes('vercel.app'));
+    }
+  }, []);
+
   return (
     <>
-      <Head>
-        <title>ResumeCheck - AI Resume Analysis & Career Guidance</title>
-        <meta name="description" content="Professional AI-powered resume analysis tool with section-by-section scoring, ATS optimization, and personalized career guidance. Get detailed feedback and suggestions to improve your resume." />
-        <meta name="keywords" content="resume analysis, AI resume checker, ATS optimization, resume scoring, career guidance, resume optimization, job application, professional development" />
-        <meta name="author" content="ResumeCheck" />
-        <meta name="robots" content="index, follow" />
-        
-        {/* Open Graph */}
-        <meta property="og:title" content="ResumeCheck - AI Resume Analysis & Career Guidance" />
-        <meta property="og:description" content="Professional AI-powered resume analysis tool with section-by-section scoring, ATS optimization, and personalized career guidance." />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://resumecheck.com" />
-        <meta property="og:image" content="https://resumecheck.com/og-image.jpg" />
-        <meta property="og:site_name" content="ResumeCheck" />
-        
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="ResumeCheck - AI Resume Analysis & Career Guidance" />
-        <meta name="twitter:description" content="Professional AI-powered resume analysis tool with section-by-section scoring, ATS optimization, and personalized career guidance." />
-        <meta name="twitter:image" content="https://resumecheck.com/og-image.jpg" />
-        
-        {/* Structured Data */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebPage",
-              "name": "ResumeCheck - AI Resume Analysis & Career Guidance",
-              "description": "Professional AI-powered resume analysis tool with section-by-section scoring, ATS optimization, and personalized career guidance.",
-              "url": "https://resumecheck.com",
-              "mainEntity": {
-                "@type": "SoftwareApplication",
-                "name": "ResumeCheck",
-                "description": "AI-powered resume analysis and optimization tool",
-                "applicationCategory": "BusinessApplication",
-                "operatingSystem": "Web Browser",
-                "offers": {
-                  "@type": "Offer",
-                  "price": "0",
-                  "priceCurrency": "USD"
-                }
-              },
-              "breadcrumb": {
-                "@type": "BreadcrumbList",
-                "itemListElement": [
-                  {
-                    "@type": "ListItem",
-                    "position": 1,
-                    "name": "Home",
-                    "item": "https://resumecheck.com"
-                  }
-                ]
-              }
-            })
-          }}
-        />
-      </Head>
+      <SEO
+        title="AI-Powered Resume Analysis & Optimization"
+        description="Get detailed resume analysis with section-by-section scores and AI-powered career advice. Optimize your resume for ATS systems and improve your job search success."
+        keywords={['resume analysis', 'ATS optimization', 'AI career advice', 'resume builder', 'job search']}
+      />
       
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        <div className="container mx-auto px-4 py-12">
           {/* Hero Section */}
           <div className="mb-12 text-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
@@ -88,7 +45,7 @@ const HomeContent = () => {
           </div>
 
           {/* Connection Test Section - Only show in development/preview */}
-          {process.env.NODE_ENV === 'development' || window.location.hostname.includes('vercel.app') && (
+          {(process.env.NODE_ENV === 'development' || isVercelPreview) && isClient && (
             <div className="mb-8">
               <ConnectionTest />
             </div>
