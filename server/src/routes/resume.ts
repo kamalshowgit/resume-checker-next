@@ -229,13 +229,14 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           ]);
           
           // Update with full AI results
-          atsScore = atsResult.score;
-          atsBreakdown = atsResult.breakdown;
-          atsSuggestions = atsResult.suggestions;
-          keyPoints = keyPointsResult;
-          jobProfiles = atsResult.jobProfiles || [];
+          if (typeof atsResult === 'object' && atsResult !== null) {
+            atsScore = (atsResult as any).score ?? atsScore;
+            atsBreakdown = (atsResult as any).breakdown ?? atsBreakdown;
+            atsSuggestions = (atsResult as any).suggestions ?? atsSuggestions;
+            jobProfiles = (Array.isArray((atsResult as any).jobProfiles) ? (atsResult as any).jobProfiles : []) ?? [];
+          }
+          keyPoints = Array.isArray(keyPointsResult) ? keyPointsResult : [];
           isFullAnalysisComplete = true;
-          
           console.log(`🎉 Full AI Analysis Complete - Score: ${atsScore}`);
           
           // TODO: Send WebSocket update to client when full analysis is ready
