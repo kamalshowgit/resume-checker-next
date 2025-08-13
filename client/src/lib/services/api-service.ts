@@ -25,6 +25,8 @@ export interface ResumeAnalysisResponse {
   requiresPayment?: boolean;
   deviceId?: string;
   analysisCount?: number;
+  analysisStatus?: 'partial' | 'complete';
+  analysisNote?: string;
 }
 
 export interface ChatResponse {

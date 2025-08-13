@@ -1096,3 +1096,160 @@ function detectResumeSections(text: string): {
   };
 }
 
+/**
+ * Fast initial analysis for immediate user feedback
+ * This provides a quick score while full AI analysis runs
+ */
+export async function getFastInitialAnalysis(text: string): Promise<{
+  score: number;
+  breakdown: Record<string, number>;
+  suggestions: Array<{ category: string; issue: string; suggestion: string; impact: number }>;
+  keyPoints: string[];
+  jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }>;
+}> {
+  try {
+    // Quick keyword analysis
+    const keywords = extractKeywords(text);
+    const sections = detectResumeSections(text);
+    
+    // Calculate basic score based on content length and structure
+    let baseScore = 50;
+    
+    // Boost score for good content length
+    if (text.length > 500) baseScore += 10;
+    if (text.length > 1000) baseScore += 10;
+    
+    // Boost score for having key sections
+    if (sections.hasSummary) baseScore += 5;
+    if (sections.hasExperience) baseScore += 10;
+    if (sections.hasSkills) baseScore += 10;
+    if (sections.hasEducation) baseScore += 5;
+    if (sections.hasContactInfo) baseScore += 5;
+    
+    // Boost score for good formatting (proper line breaks, bullet points)
+    const lines = text.split('\n').filter(line => line.trim().length > 0);
+    if (lines.length > 10) baseScore += 5;
+    
+    // Boost score for action verbs and quantifiable achievements
+    const actionVerbs = ['developed', 'implemented', 'managed', 'led', 'created', 'designed', 'achieved', 'increased', 'improved', 'reduced'];
+    const hasActionVerbs = actionVerbs.some(verb => text.toLowerCase().includes(verb));
+    if (hasActionVerbs) baseScore += 5;
+    
+    // Cap score at 85 for initial analysis
+    const finalScore = Math.min(baseScore, 85);
+    
+    // Generate basic breakdown
+    const breakdown: Record<string, number> = {
+      keywords: sections.hasSkills ? 70 : 40,
+      formatting: lines.length > 10 ? 75 : 50,
+      experience: sections.hasExperience ? 75 : 40,
+      skills: sections.hasSkills ? 70 : 40,
+      achievements: hasActionVerbs ? 70 : 45,
+      contactInfo: sections.hasContactInfo ? 80 : 30,
+      certifications: sections.hasCertifications ? 70 : 0,
+      languages: sections.hasLanguages ? 70 : 0,
+      projects: sections.hasProjects ? 70 : 0,
+      volunteerWork: sections.hasVolunteerWork ? 70 : 0
+    };
+    
+    // Generate basic suggestions
+    const suggestions: Array<{ category: string; issue: string; suggestion: string; impact: number }> = [];
+    
+    if (!sections.hasSummary) {
+      suggestions.push({
+        category: 'summary',
+        issue: 'Missing professional summary',
+        suggestion: 'Add a concise 2-3 sentence summary highlighting your key strengths and career objectives',
+        impact: 8
+      });
+    }
+    
+    if (!sections.hasExperience) {
+      suggestions.push({
+        category: 'experience',
+        issue: 'Missing work experience',
+        suggestion: 'Include detailed work experience with quantifiable achievements',
+        impact: 10
+      });
+    }
+    
+    if (!sections.hasSkills) {
+      suggestions.push({
+        category: 'skills',
+        issue: 'Missing skills section',
+        suggestion: 'Add a comprehensive skills section with technical and soft skills',
+        impact: 9
+      });
+    }
+    
+    if (text.length < 500) {
+      suggestions.push({
+        category: 'content',
+        issue: 'Resume too short',
+        suggestion: 'Expand your resume with more details about your experience and achievements',
+        impact: 7
+      });
+    }
+    
+    // Generate basic key points
+    const keyPoints = [
+      'Resume uploaded successfully',
+      'Initial analysis completed',
+      'Full AI analysis in progress'
+    ];
+    
+    // Generate basic job profiles based on content
+    const jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }> = [
+      {
+        title: 'General Professional',
+        matchScore: 70,
+        reasoning: 'Based on initial content analysis'
+      }
+    ];
+    
+    return {
+      score: finalScore,
+      breakdown,
+      suggestions,
+      keyPoints,
+      jobProfiles
+    };
+    
+  } catch (error) {
+    console.error('Fast analysis failed:', error);
+    // Return basic fallback
+    return {
+      score: 50,
+      breakdown: {
+        keywords: 50, formatting: 50, experience: 50, skills: 50, achievements: 50,
+        contactInfo: 50, certifications: 0, languages: 0, projects: 0, volunteerWork: 0
+      },
+      suggestions: [{
+        category: 'general',
+        issue: 'Analysis in progress',
+        suggestion: 'Please wait while we complete the full analysis',
+        impact: 5
+      }],
+      keyPoints: ['Resume uploaded successfully'],
+      jobProfiles: []
+    };
+  }
+}
+
+/**
+ * Extract keywords from text for quick analysis
+ */
+function extractKeywords(text: string): string[] {
+  const commonKeywords = [
+    'javascript', 'python', 'java', 'react', 'node.js', 'sql', 'aws', 'docker',
+    'project management', 'leadership', 'communication', 'problem solving',
+    'data analysis', 'machine learning', 'agile', 'scrum'
+  ];
+  
+  const foundKeywords = commonKeywords.filter(keyword => 
+    text.toLowerCase().includes(keyword.toLowerCase())
+  );
+  
+  return foundKeywords;
+}
+

@@ -86,6 +86,8 @@ const HomeContent = () => {
                       console.log("Updated resume text:", updatedText);
                       // Here you would typically update the resume text in the context
                     }}
+                    analysisStatus={state.resumeData.analysisStatus}
+                    analysisNote={state.resumeData.analysisNote}
                   />
                 </div>
               </div>

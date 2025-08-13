@@ -46,6 +46,8 @@ export interface ResumeData {
   filename: string;
   lastModified: Date;
   version?: number;
+  analysisStatus?: 'partial' | 'complete';
+  analysisNote?: string;
 }
 
 export interface UserSession {

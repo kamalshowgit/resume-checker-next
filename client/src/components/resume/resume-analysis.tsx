@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { FiAlertTriangle, FiCheckCircle, FiDownload, FiInfo, FiStar } from "react-icons/fi";
+import { AnalysisStatusInline } from "./analysis-status";
 
 interface ResumeAnalysisProps {
   analysisResults: {
@@ -41,9 +42,11 @@ interface ResumeAnalysisProps {
   };
   resumeText: string;
   onContentUpdate?: (updatedText: string) => void;
+  analysisStatus?: 'partial' | 'complete';
+  analysisNote?: string;
 }
 
-export function ResumeAnalysis({ analysisResults, resumeText, onContentUpdate }: ResumeAnalysisProps) {
+export function ResumeAnalysis({ analysisResults, resumeText, onContentUpdate, analysisStatus, analysisNote }: ResumeAnalysisProps) {
   const [activeTab, setActiveTab] = useState<"score" | "content">("score");
   const [editContent, setEditContent] = useState("");
   const [resumeLines, setResumeLines] = useState<string[]>(resumeText.split("\n"));
@@ -196,6 +199,16 @@ Generated on: ${new Date().toLocaleString()}
 
   return (
     <div className="space-y-6">
+      {/* Analysis Status */}
+      {analysisStatus && (
+        <div className="flex justify-center">
+          <AnalysisStatusInline 
+            status={analysisStatus} 
+            note={analysisNote}
+          />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="col-span-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">

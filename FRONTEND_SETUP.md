@@ -25,6 +25,9 @@ Your frontend is still trying to connect to `localhost:4000` instead of your dep
 ```
 NEXT_PUBLIC_API_URL=https://your-actual-backend-url.onrender.com
 NEXT_PUBLIC_APP_URL=https://your-actual-frontend-url.vercel.app
+
+
+https://resume-checker-next-3anvezxbi-kamalsoniatvercels-projects.vercel.app/
 ```
 
 **Replace the URLs with your actual deployed URLs!**

@@ -1,58 +1,72 @@
-// Configuration file for the application
-export const config = {
-  // API Configuration
-  api: {
-    // Backend API URL - Update this with your actual Render backend URL
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://your-backend-name.onrender.com',
-    
-    // Fallback to localhost only in development
-    fallbackURL: process.env.NODE_ENV === 'development' ? 'http://localhost:4000' : undefined,
-    
-    // Timeout settings
-    timeout: 30000,
-    uploadTimeout: 60000,
-  },
+/**
+ * Configuration for production optimization and API management
+ */
+
+// API URL configuration
+export function getApiUrl(): string {
+  // Check for production API URL first
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
   
-  // App Configuration
-  app: {
-    name: 'ResumeCheck',
-    version: '1.0.0',
-    baseURL: process.env.NEXT_PUBLIC_APP_URL || 'https://your-app-name.vercel.app',
-  },
+  // Fallback to localhost for development
+  return 'http://localhost:5000';
+}
+
+// App URL configuration
+export function getAppUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
   
-  // Payment Configuration
-  payment: {
-    razorpay: {
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'your_razorpay_key_id',
-      keySecret: process.env.NEXT_PUBLIC_RAZORPAY_KEY_SECRET || 'your_razorpay_key_secret',
-    },
-  },
+  // Fallback to localhost for development
+  return 'http://localhost:3000';
+}
+
+// Check if production is properly configured
+export function isProductionConfigured(): boolean {
+  return !!(process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_APP_URL);
+}
+
+// Performance optimization settings
+export const PERFORMANCE_CONFIG = {
+  // AI analysis timeouts
+  FAST_ANALYSIS_TIMEOUT: 10000, // 10 seconds for fast analysis
+  FULL_ANALYSIS_TIMEOUT: 45000, // 45 seconds for full AI analysis
   
-  // Feature Flags
-  features: {
-    mockData: process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true',
-    debugMode: process.env.NODE_ENV === 'development',
-  },
+  // Content improvement limits
+  MAX_LINES_TO_IMPROVE: 2, // Reduce from 3 to 2 for faster processing
+  IMPROVEMENT_DELAY: 3000, // 3 seconds between improvements
+  
+  // Rate limiting
+  MAX_REQUESTS_PER_MINUTE: 20,
+  RATE_LIMIT_WINDOW: 60000, // 1 minute
+  
+  // Cache settings
+  ANALYSIS_CACHE_TTL: 300000, // 5 minutes
+  USER_SESSION_TTL: 1800000, // 30 minutes
 };
 
-// Helper function to get the correct API URL
-export function getApiUrl(): string {
-  // If we have a production API URL, use it
-  if (config.api.baseURL && config.api.baseURL !== 'https://your-backend-name.onrender.com') {
-    return config.api.baseURL;
-  }
-  
-  // In development, fall back to localhost
-  if (config.api.fallbackURL) {
-    return config.api.fallbackURL;
-  }
-  
-  // Default fallback
-  return 'http://localhost:4000';
-}
+// Feature flags for production
+export const FEATURE_FLAGS = {
+  ENABLE_PROGRESSIVE_ANALYSIS: true,
+  ENABLE_FAST_INITIAL_SCORE: true,
+  ENABLE_BACKGROUND_AI: true,
+  ENABLE_CONTENT_IMPROVEMENT: true,
+  ENABLE_DEVICE_TRACKING: true,
+  ENABLE_PAYMENT_SYSTEM: true,
+};
 
-// Helper function to check if we're using production URLs
-export function isProductionConfigured(): boolean {
-  return config.api.baseURL !== 'https://your-backend-name.onrender.com' && 
-         config.app.baseURL !== 'https://your-app-name.vercel.app';
-}
+// Environment detection
+export const ENV = {
+  IS_PRODUCTION: process.env.NODE_ENV === 'production',
+  IS_DEVELOPMENT: process.env.NODE_ENV === 'development',
+  IS_TEST: process.env.NODE_ENV === 'test',
+};
+
+// Logging configuration
+export const LOGGING_CONFIG = {
+  LEVEL: process.env.NEXT_PUBLIC_LOG_LEVEL || 'info',
+  ENABLE_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
+  ENABLE_PERFORMANCE_MONITORING: process.env.NEXT_PUBLIC_ENABLE_PERFORMANCE_MONITORING === 'true',
+};

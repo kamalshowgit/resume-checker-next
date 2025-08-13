@@ -6,6 +6,7 @@ import { useResumeContext } from "../../lib/context/resume-context";
 import { apiService } from "../../lib/services/api-service";
 import { PaymentModal } from "./payment-modal";
 import { getDeviceId } from "../../lib/utils/device-id";
+import { AnalysisStatus } from "./analysis-status";
 
 interface UploadState {
   isUploading: boolean;
@@ -18,6 +19,11 @@ interface PaymentState {
   showPaymentModal: boolean;
   deviceId: string;
   analysisCount: number;
+}
+
+interface AnalysisState {
+  status: 'partial' | 'complete';
+  note?: string;
 }
 
 const ContextAwareUploader: React.FC = () => {
@@ -33,6 +39,11 @@ const ContextAwareUploader: React.FC = () => {
     showPaymentModal: false,
     deviceId: '',
     analysisCount: 0,
+  });
+
+  const [analysisState, setAnalysisState] = useState<AnalysisState>({
+    status: 'complete',
+    note: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -328,6 +339,12 @@ const ContextAwareUploader: React.FC = () => {
       clearInterval(progressInterval);
       setUploadState(prev => ({ ...prev, progress: 100, success: true }));
 
+      // Update analysis status
+      setAnalysisState({
+        status: response.analysisStatus || 'complete',
+        note: response.analysisNote || ''
+      });
+
       // Update context with new resume data
       if (response.success) {
         actions.uploadResume({
@@ -558,6 +575,13 @@ const ContextAwareUploader: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Analysis Status */}
+      <AnalysisStatus 
+        status={analysisState.status}
+        note={analysisState.note}
+        onRefresh={() => window.location.reload()}
+      />
 
       {/* Payment Modal */}
       {paymentState.showPaymentModal && (
