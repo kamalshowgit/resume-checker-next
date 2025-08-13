@@ -191,6 +191,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     let jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }> = [];
     let isFullAnalysisComplete = false;
     
+    // Set a global timeout for the entire analysis process
+    const globalTimeout = setTimeout(() => {
+      console.log('⏰ Global analysis timeout reached - sending response with available data');
+    }, 10000); // 10 seconds total timeout
+    
     try {
       console.log(`📝 Extracted text length: ${cleanedText.length} characters`);
       console.log(`📝 First 200 characters: ${cleanedText.substring(0, 200)}...`);
@@ -214,7 +219,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       console.log(`🔄 Starting full AI analysis in background...`);
       const fullAnalysisPromise = (async () => {
         try {
-          const analysisTimeout = 45000; // 45 seconds for full analysis
+          // Production optimization: reduce timeouts and complexity
+          const isProduction = process.env.NODE_ENV === 'production';
+          const analysisTimeout = isProduction ? 20000 : 30000; // 20s in production, 30s in dev
           
           const [atsResult, keyPointsResult] = await Promise.all([
             Promise.race([
@@ -255,52 +262,79 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         }
       })();
       
-      // Don't await the full analysis - let it run in background
-      // fullAnalysisPromise.catch(console.error);
-      
-      // Generate improved content for each line (limit to prevent rate limiting)
-      const lines = cleanedText.split('\n');
-      const linesToImprove = lines
-        .filter((line, index) => line && line.trim().length > 15 && index < 10) // Only first 10 substantial lines
-        .slice(0, 2); // Reduced to 2 lines to prevent rate limiting
-      
-      console.log(`[Content Improvement] Attempting to improve ${linesToImprove.length} lines`);
-      
-      for (let i = 0; i < linesToImprove.length; i++) {
-        const line = linesToImprove[i];
-        if (!line) continue; // Skip if line is undefined
-        
-        const lineIndex = lines.indexOf(line);
-        
-        if (line.trim().length > 15) {
-          try {
-            // Add delay between API calls to prevent rate limiting
-            if (i > 0) {
-              await new Promise(resolve => setTimeout(resolve, 3000)); // 3 second delay
-            }
-            
-            const improved = await Promise.race([
-              improveContent(line, 'general'),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Content improvement timeout')), 20000)
-              )
-            ]);
-            
-            if ((improved as any).improvedText && (improved as any).improvedText !== line) {
-              improvedContent[lineIndex] = (improved as any).improvedText;
-              console.log(`[Line ${lineIndex}] Content improved successfully`);
-            }
-          } catch (error) {
-            console.log(`[Line ${lineIndex}] Improvement failed:`, error);
-            // Continue with other lines even if one fails
+      // Step 3: Start content improvement in background (non-blocking)
+      console.log(`🔄 Starting content improvement in background...`);
+      const contentImprovementPromise = (async () => {
+        try {
+          // Check if we're in production mode - disable content improvement for speed
+          const isProduction = process.env.NODE_ENV === 'production';
+          if (isProduction) {
+            console.log(`🚀 Production mode detected - skipping content improvement for faster response`);
+            return;
           }
+          
+          // Generate improved content for each line (limit to prevent rate limiting)
+          const lines = cleanedText.split('\n');
+          const linesToImprove = lines
+            .filter((line, index) => line && line.trim().length > 15 && index < 5) // Reduced to 5 lines
+            .slice(0, 1); // Reduced to 1 line for faster response
+          
+          console.log(`[Content Improvement] Attempting to improve ${linesToImprove.length} lines`);
+          
+          for (let i = 0; i < linesToImprove.length; i++) {
+            const line = linesToImprove[i];
+            if (!line) continue; // Skip if line is undefined
+            
+            const lineIndex = lines.indexOf(line);
+            
+            if (line.trim().length > 15) {
+              try {
+                // Reduced delay for production
+                if (i > 0) {
+                  await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced to 1 second
+                }
+                
+                const improved = await Promise.race([
+                  improveContent(line, 'general'),
+                  new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Content improvement timeout')), 15000) // Reduced to 15 seconds
+                  )
+                ]);
+                
+                if ((improved as any).improvedText && (improved as any).improvedText !== line) {
+                  improvedContent[lineIndex] = (improved as any).improvedText;
+                  console.log(`[Line ${lineIndex}] Content improved successfully`);
+                }
+              } catch (error) {
+                console.log(`[Line ${lineIndex}] Improvement failed:`, error);
+                // Continue with other lines even if one fails
+              }
+            }
+          }
+          
+          console.log(`✅ Content improvement completed. Improved Lines: ${Object.keys(improvedContent).length}`);
+          
+        } catch (error) {
+          console.error('❌ Content improvement failed:', error);
+          // Keep existing content, don't fail the request
         }
-      }
+      })();
       
-      console.log(`✅ Fast analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Improved Lines: ${Object.keys(improvedContent).length}, Job Profiles: ${jobProfiles.length}`);
-      console.log(`🔄 Full AI analysis running in background...`);
+      // Don't await either promise - let them run in background
+      // fullAnalysisPromise.catch(console.error);
+      // contentImprovementPromise.catch(console.error);
+      
+      console.log(`✅ Fast analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Job Profiles: ${jobProfiles.length}`);
+      console.log(`🔄 Full AI analysis and content improvement running in background...`);
+      
+      // Clear the global timeout since we have fast results
+      clearTimeout(globalTimeout);
+      
     } catch (aiError) {
       console.error('❌ AI analysis failed:', aiError);
+      
+      // Clear the global timeout
+      clearTimeout(globalTimeout);
       
       // Use fallback scoring instead of throwing error
       console.log('🔄 Using fallback scoring...');

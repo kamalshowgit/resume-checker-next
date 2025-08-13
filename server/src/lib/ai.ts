@@ -1123,41 +1123,54 @@ export async function getFastInitialAnalysis(text: string): Promise<{
     // Boost score for good content length
     if (text.length > 500) baseScore += 10;
     if (text.length > 1000) baseScore += 10;
+    if (text.length > 2000) baseScore += 5;
     
     // Boost score for having key sections
-    if (sections.hasSummary) baseScore += 5;
-    if (sections.hasExperience) baseScore += 10;
-    if (sections.hasSkills) baseScore += 10;
-    if (sections.hasEducation) baseScore += 5;
-    if (sections.hasContactInfo) baseScore += 5;
+    if (sections.hasSummary) baseScore += 8;
+    if (sections.hasExperience) baseScore += 12;
+    if (sections.hasSkills) baseScore += 12;
+    if (sections.hasEducation) baseScore += 6;
+    if (sections.hasContactInfo) baseScore += 6;
+    if (sections.hasProjects) baseScore += 5;
+    if (sections.hasCertifications) baseScore += 4;
     
     // Boost score for good formatting (proper line breaks, bullet points)
     const lines = text.split('\n').filter(line => line.trim().length > 0);
     if (lines.length > 10) baseScore += 5;
+    if (lines.length > 20) baseScore += 3;
     
     // Boost score for action verbs and quantifiable achievements
-    const actionVerbs = ['developed', 'implemented', 'managed', 'led', 'created', 'designed', 'achieved', 'increased', 'improved', 'reduced'];
+    const actionVerbs = ['developed', 'implemented', 'managed', 'led', 'created', 'designed', 'achieved', 'increased', 'improved', 'reduced', 'delivered', 'coordinated', 'optimized', 'streamlined', 'facilitated'];
     const hasActionVerbs = actionVerbs.some(verb => text.toLowerCase().includes(verb));
-    if (hasActionVerbs) baseScore += 5;
+    if (hasActionVerbs) baseScore += 8;
     
-    // Cap score at 85 for initial analysis
-    const finalScore = Math.min(baseScore, 85);
+    // Boost score for numbers and metrics
+    const hasMetrics = /\d+%|\d+x|\$\d+|\d+ users|\d+ customers/.test(text);
+    if (hasMetrics) baseScore += 5;
     
-    // Generate basic breakdown
+    // Boost score for technical keywords
+    const technicalKeywords = ['javascript', 'python', 'react', 'node.js', 'aws', 'docker', 'kubernetes', 'sql', 'api', 'git', 'agile', 'scrum'];
+    const hasTechnicalKeywords = technicalKeywords.some(keyword => text.toLowerCase().includes(keyword));
+    if (hasTechnicalKeywords) baseScore += 5;
+    
+    // Cap score at 90 for initial analysis (increased from 85)
+    const finalScore = Math.min(baseScore, 90);
+    
+    // Generate comprehensive breakdown with better scoring
     const breakdown: Record<string, number> = {
-      keywords: sections.hasSkills ? 70 : 40,
-      formatting: lines.length > 10 ? 75 : 50,
-      experience: sections.hasExperience ? 75 : 40,
-      skills: sections.hasSkills ? 70 : 40,
-      achievements: hasActionVerbs ? 70 : 45,
-      contactInfo: sections.hasContactInfo ? 80 : 30,
-      certifications: sections.hasCertifications ? 70 : 0,
-      languages: sections.hasLanguages ? 70 : 0,
-      projects: sections.hasProjects ? 70 : 0,
-      volunteerWork: sections.hasVolunteerWork ? 70 : 0
+      keywords: sections.hasSkills ? 75 : 45,
+      formatting: lines.length > 10 ? 80 : 55,
+      experience: sections.hasExperience ? 80 : 45,
+      skills: sections.hasSkills ? 80 : 45,
+      achievements: hasActionVerbs ? 80 : 50,
+      contactInfo: sections.hasContactInfo ? 85 : 35,
+      certifications: sections.hasCertifications ? 75 : 0,
+      languages: sections.hasLanguages ? 75 : 0,
+      projects: sections.hasProjects ? 75 : 0,
+      volunteerWork: sections.hasVolunteerWork ? 75 : 0
     };
     
-    // Generate basic suggestions
+    // Generate comprehensive suggestions
     const suggestions: Array<{ category: string; issue: string; suggestion: string; impact: number }> = [];
     
     if (!sections.hasSummary) {
@@ -1173,7 +1186,7 @@ export async function getFastInitialAnalysis(text: string): Promise<{
       suggestions.push({
         category: 'experience',
         issue: 'Missing work experience',
-        suggestion: 'Include detailed work experience with quantifiable achievements',
+        suggestion: 'Include detailed work experience with quantifiable achievements and action verbs',
         impact: 10
       });
     }
@@ -1196,21 +1209,61 @@ export async function getFastInitialAnalysis(text: string): Promise<{
       });
     }
     
-    // Generate basic key points
+    if (!hasActionVerbs) {
+      suggestions.push({
+        category: 'achievements',
+        issue: 'Missing action verbs',
+        suggestion: 'Use strong action verbs like "developed", "implemented", "managed" to describe your achievements',
+        impact: 6
+      });
+    }
+    
+    if (!hasMetrics) {
+      suggestions.push({
+        category: 'metrics',
+        issue: 'Missing quantifiable achievements',
+        suggestion: 'Include specific numbers, percentages, and metrics to demonstrate your impact',
+        impact: 6
+      });
+    }
+    
+    // Generate comprehensive key points based on content
     const keyPoints = [
       'Resume uploaded successfully',
       'Initial analysis completed',
       'Full AI analysis in progress'
     ];
     
-    // Generate basic job profiles based on content
-    const jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }> = [
-      {
-        title: 'General Professional',
+    // Add content-specific key points
+    if (sections.hasExperience) keyPoints.push('Work experience detected');
+    if (sections.hasSkills) keyPoints.push('Skills section identified');
+    if (hasActionVerbs) keyPoints.push('Action-oriented language found');
+    if (hasMetrics) keyPoints.push('Quantifiable achievements present');
+    if (hasTechnicalKeywords) keyPoints.push('Technical skills identified');
+    
+    // Generate job profiles based on content analysis
+    const jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }> = [];
+    
+    // Basic job profile based on content length and structure
+    if (text.length > 1000 && sections.hasExperience) {
+      jobProfiles.push({
+        title: 'Senior Professional',
+        matchScore: 75,
+        reasoning: 'Based on extensive experience and detailed content'
+      });
+    } else if (text.length > 500) {
+      jobProfiles.push({
+        title: 'Mid-level Professional',
         matchScore: 70,
+        reasoning: 'Based on moderate experience and good content structure'
+      });
+    } else {
+      jobProfiles.push({
+        title: 'Entry-level Professional',
+        matchScore: 65,
         reasoning: 'Based on initial content analysis'
-      }
-    ];
+      });
+    }
     
     const result = {
       score: finalScore,
@@ -1232,12 +1285,12 @@ export async function getFastInitialAnalysis(text: string): Promise<{
     
   } catch (error) {
     console.error('❌ Fast analysis failed:', error);
-    // Return basic fallback
+    // Return comprehensive fallback
     return {
-      score: 50,
+      score: 55,
       breakdown: {
-        keywords: 50, formatting: 50, experience: 50, skills: 50, achievements: 50,
-        contactInfo: 50, certifications: 0, languages: 0, projects: 0, volunteerWork: 0
+        keywords: 55, formatting: 55, experience: 55, skills: 55, achievements: 55,
+        contactInfo: 55, certifications: 0, languages: 0, projects: 0, volunteerWork: 0
       },
       suggestions: [{
         category: 'general',
@@ -1245,8 +1298,12 @@ export async function getFastInitialAnalysis(text: string): Promise<{
         suggestion: 'Please wait while we complete the full analysis',
         impact: 5
       }],
-      keyPoints: ['Resume uploaded successfully'],
-      jobProfiles: []
+      keyPoints: ['Resume uploaded successfully', 'Basic analysis completed'],
+      jobProfiles: [{
+        title: 'General Professional',
+        matchScore: 60,
+        reasoning: 'Based on initial upload'
+      }]
     };
   }
 }
