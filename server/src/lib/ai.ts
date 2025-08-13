@@ -1108,9 +1108,14 @@ export async function getFastInitialAnalysis(text: string): Promise<{
   jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }>;
 }> {
   try {
+    console.log(`🚀 Starting fast analysis for text length: ${text.length}`);
+    
     // Quick keyword analysis
     const keywords = extractKeywords(text);
     const sections = detectResumeSections(text);
+    
+    console.log(`🔍 Detected sections:`, sections);
+    console.log(`🔑 Found keywords:`, keywords);
     
     // Calculate basic score based on content length and structure
     let baseScore = 50;
@@ -1207,7 +1212,7 @@ export async function getFastInitialAnalysis(text: string): Promise<{
       }
     ];
     
-    return {
+    const result = {
       score: finalScore,
       breakdown,
       suggestions,
@@ -1215,8 +1220,18 @@ export async function getFastInitialAnalysis(text: string): Promise<{
       jobProfiles
     };
     
+    console.log(`✅ Fast analysis result:`, {
+      score: result.score,
+      breakdownKeys: Object.keys(result.breakdown),
+      suggestionsCount: result.suggestions.length,
+      keyPointsCount: result.keyPoints.length,
+      jobProfilesCount: result.jobProfiles.length
+    });
+    
+    return result;
+    
   } catch (error) {
-    console.error('Fast analysis failed:', error);
+    console.error('❌ Fast analysis failed:', error);
     // Return basic fallback
     return {
       score: 50,

@@ -392,28 +392,48 @@ const ContextAwareUploader: React.FC = () => {
 
       // Update context with new resume data
       if (response.success) {
+        // Debug logging to see what we're receiving
+        console.log('📊 Response received:', {
+          atsScore: response.atsScore,
+          atsBreakdown: response.atsBreakdown,
+          atsSuggestions: response.atsSuggestions,
+          keyPoints: response.keyPoints,
+          content: response.content?.substring(0, 100) + '...'
+        });
+
+        // Ensure we have valid ATS scores
+        const overallScore = response.atsScore || 0;
+        const breakdown = response.atsBreakdown as Record<string, unknown> || {};
+        
+        // Map backend breakdown fields to frontend expected fields
+        const sectionScores = {
+          summary: (breakdown.keywords as number) || 0,
+          workExperience: (breakdown.experience as number) || 0,
+          skills: (breakdown.skills as number) || 0,
+          education: (breakdown.education as number) || 0,
+          achievements: (breakdown.achievements as number) || 0,
+          contactInfo: (breakdown.contactInfo as number) || 0,
+          certifications: (breakdown.certifications as number) || 0,
+          languages: (breakdown.languages as number) || 0,
+          projects: (breakdown.projects as number) || 0,
+          volunteerWork: (breakdown.volunteerWork as number) || 0,
+        };
+
+        // Log the mapped scores for debugging
+        console.log('🎯 Mapped section scores:', sectionScores);
+        console.log('📈 Overall ATS score:', overallScore);
+
         actions.uploadResume({
           text: response.content || '',
           keyPoints: response.keyPoints || [],
           analysis: {
-            overallScore: response.atsScore || 0,
-            sectionScores: {
-              summary: (response.atsBreakdown as Record<string, unknown>)?.keywords as number || 0,
-              workExperience: (response.atsBreakdown as Record<string, unknown>)?.experience as number || 0,
-              skills: (response.atsBreakdown as Record<string, unknown>)?.skills as number || 0,
-              education: (response.atsBreakdown as Record<string, unknown>)?.education as number || 0,
-              achievements: (response.atsBreakdown as Record<string, unknown>)?.achievements as number || 0,
-              contactInfo: (response.atsBreakdown as Record<string, unknown>)?.contactInfo as number || 0,
-              certifications: (response.atsBreakdown as Record<string, unknown>)?.certifications as number || 0,
-              languages: (response.atsBreakdown as Record<string, unknown>)?.languages as number || 0,
-              projects: (response.atsBreakdown as Record<string, unknown>)?.projects as number || 0,
-              volunteerWork: (response.atsBreakdown as Record<string, unknown>)?.volunteerWork as number || 0,
-            },
+            overallScore,
+            sectionScores,
             suggestions: mapSuggestions(response.atsSuggestions),
             improvedContent: response.improvedContent,
             jobProfiles: response.jobProfiles || [],
           },
-          atsScore: response.atsScore || 0,
+          atsScore: overallScore,
           resumeId: response.resumeId || '',
           filename: file.name,
           lastModified: new Date(),
@@ -422,7 +442,7 @@ const ContextAwareUploader: React.FC = () => {
         // Track successful upload
         actions.addAction('Resume upload completed', { 
           filename: file.name,
-          atsScore: response.atsScore,
+          atsScore: overallScore,
           analysisCompleted: true
         });
 

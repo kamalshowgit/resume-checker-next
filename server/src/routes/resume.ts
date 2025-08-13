@@ -206,6 +206,9 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       jobProfiles = fastResult.jobProfiles;
       
       console.log(`✅ Fast Analysis Complete - Score: ${atsScore}`);
+      console.log(`📊 Fast Analysis Breakdown:`, atsBreakdown);
+      console.log(`💡 Fast Analysis Suggestions:`, atsSuggestions?.length || 0);
+      console.log(`🎯 Fast Analysis Key Points:`, keyPoints?.length || 0);
       
       // Step 2: Start full AI analysis in background (non-blocking)
       console.log(`🔄 Starting full AI analysis in background...`);
@@ -237,7 +240,11 @@ router.post('/upload', upload.single('file'), async (req, res) => {
           }
           keyPoints = Array.isArray(keyPointsResult) ? keyPointsResult : [];
           isFullAnalysisComplete = true;
+          
           console.log(`🎉 Full AI Analysis Complete - Score: ${atsScore}`);
+          console.log(`📊 Full AI Breakdown:`, atsBreakdown);
+          console.log(`💡 Full AI Suggestions:`, atsSuggestions?.length || 0);
+          console.log(`🎯 Full AI Key Points:`, keyPoints?.length || 0);
           
           // TODO: Send WebSocket update to client when full analysis is ready
           // For now, client will need to refresh to see full results
@@ -361,6 +368,54 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     
     console.log(`📤 Sending response to client...`);
     
+    // Validate and ensure we have valid ATS scores
+    if (typeof atsScore !== 'number' || isNaN(atsScore)) {
+      console.warn('⚠️ Invalid ATS score detected, using fallback');
+      atsScore = 50;
+    }
+    
+    if (!atsBreakdown || typeof atsBreakdown !== 'object') {
+      console.warn('⚠️ Invalid ATS breakdown detected, using fallback');
+      atsBreakdown = {
+        keywords: 50, formatting: 50, experience: 50, skills: 50, achievements: 50,
+        contactInfo: 50, certifications: 0, languages: 0, projects: 0, volunteerWork: 0
+      };
+    }
+    
+    if (!Array.isArray(atsSuggestions)) {
+      console.warn('⚠️ Invalid ATS suggestions detected, using fallback');
+      atsSuggestions = [{
+        category: 'general',
+        issue: 'Analysis in progress',
+        suggestion: 'Please wait while we complete the full analysis',
+        impact: 5
+      }];
+    }
+    
+    if (!Array.isArray(keyPoints)) {
+      console.warn('⚠️ Invalid key points detected, using fallback');
+      keyPoints = ['Resume uploaded successfully', 'Basic analysis completed'];
+    }
+    
+    if (!Array.isArray(jobProfiles)) {
+      console.warn('⚠️ Invalid job profiles detected, using fallback');
+      jobProfiles = [];
+    }
+    
+    // Log the final response data for debugging
+    console.log(`📊 Final Response Data:`, {
+      atsScore,
+      atsBreakdown: JSON.stringify(atsBreakdown),
+      atsSuggestions: atsSuggestions?.length || 0,
+      keyPoints: keyPoints?.length || 0,
+      improvedContent: Object.keys(improvedContent).length,
+      jobProfiles: jobProfiles?.length || 0,
+      analysisStatus: isFullAnalysisComplete ? 'complete' : 'partial',
+      analysisNote: isFullAnalysisComplete 
+        ? 'Full AI analysis completed' 
+        : 'Fast analysis completed. Full AI analysis running in background. Refresh to see complete results.'
+    });
+    
     res.json({
       success: true,
       resumeId: savedResume.id,
@@ -378,7 +433,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       analysisStatus: isFullAnalysisComplete ? 'complete' : 'partial',
       analysisNote: isFullAnalysisComplete 
         ? 'Full AI analysis completed' 
-        : 'Fast analysis completed. Full AI analysis running in background. Refresh to see complete results.',
+        : 'Full AI analysis running in background. Refresh to see complete results.',
       processingDetails: {
         charactersExtracted: cleanedText.length,
         linesExtracted: cleanedText.split('\n').length,
