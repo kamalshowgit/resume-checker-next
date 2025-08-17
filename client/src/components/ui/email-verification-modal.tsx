@@ -200,6 +200,25 @@ export function EmailVerificationModal({ isOpen, onClose, onEmailVerified }: Ema
                   We've sent a 6-digit verification code to:
                 </p>
                 <p className="text-blue-600 font-medium mt-1">{email}</p>
+                
+                {/* Payment Status Info */}
+                {!isFirstTime && (
+                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      ⚠️ <strong>Payment Required:</strong> You've used your free analysis. 
+                      Additional analyses cost ₹49 each.
+                    </p>
+                  </div>
+                )}
+                
+                {isFirstTime && (
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      ✅ <strong>Free Analysis Available:</strong> This is your first time! 
+                      You get one free resume analysis.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div>

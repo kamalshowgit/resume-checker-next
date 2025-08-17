@@ -83,8 +83,7 @@ In Vercel dashboard, add these environment variables:
 NEXT_PUBLIC_API_URL=https://your-backend-url.onrender.com
 NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
 NEXT_PUBLIC_RAZORPAY_KEY_ID=your_razorpay_key_id
-NEXT_PUBLIC_RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-```
+# Do NOT add the secret in the frontend; keep it in the backend only.
 
 ### 2.4 Deploy
 Click "Deploy" and wait for the build to complete.

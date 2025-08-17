@@ -100,7 +100,7 @@ const ContextAwareUploader: React.FC = () => {
       
       if (response.requiresPayment) {
         console.log('💰 Payment required - showing modal');
-        // Show payment modal
+        // Show payment modal with clear information
         setPaymentState({
           showPaymentModal: true,
           email: verifiedEmail,
@@ -337,6 +337,7 @@ const ContextAwareUploader: React.FC = () => {
     }
   };
 
+  // Handle file upload with improved payment flow
   const handleFileUpload = async (file: File) => {
     try {
       console.log('🚀 Starting file upload process...');
@@ -408,11 +409,12 @@ const ContextAwareUploader: React.FC = () => {
       // Clear progress interval
       clearInterval(progressInterval);
 
-      // Check if payment is required
+      // Check if payment is required after analysis
       if (response.error === 'Payment required' && response.requiresPayment) {
         clearInterval(progressInterval);
         setUploadState(prev => ({ ...prev, isUploading: false, progress: 0 }));
         
+        // Show payment modal with clear information about why payment is needed
         setPaymentState({
           showPaymentModal: true,
           email: verifiedEmail || '',
