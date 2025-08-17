@@ -13,14 +13,62 @@ export function getApiUrl(): string {
   return 'http://localhost:5000';
 }
 
-// App URL configuration
+// App URL configuration - supports multiple domains
 export function getAppUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL;
+    // If it's a comma-separated list, return the first one as primary
+    const urls = process.env.NEXT_PUBLIC_APP_URL.split(',').map(url => url.trim());
+    return urls[0];
   }
   
   // Fallback to localhost for development
   return 'http://localhost:3000';
+}
+
+// Get all app URLs as an array
+export function getAllAppUrls(): string[] {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.split(',').map(url => url.trim());
+  }
+  
+  // Fallback to localhost for development
+  return ['http://localhost:3000'];
+}
+
+// Check if current domain is in allowed list
+export function isCurrentDomainAllowed(): boolean {
+  if (typeof window === 'undefined') {
+    // Server-side, always allow
+    return true;
+  }
+  
+  const currentOrigin = window.location.origin;
+  const allowedUrls = getAllAppUrls();
+  
+  return allowedUrls.some(url => {
+    // Handle both http and https
+    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+    return urlObj.origin === currentOrigin;
+  });
+}
+
+// Get CORS origins for server
+export function getCorsOrigins(): string[] {
+  if (process.env.NODE_ENV === 'production') {
+    if (process.env.CORS_ORIGIN) {
+      // Support comma-separated CORS origins
+      return process.env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    }
+    if (process.env.APP_URL) {
+      // Support comma-separated APP_URL for CORS
+      return process.env.APP_URL.split(',').map(url => url.trim());
+    }
+    // Fallback to common production domains
+    return ['https://resumecheckerai.info', 'https://www.resumecheckerai.info'];
+  }
+  
+  // Development - allow all origins
+  return ['*'];
 }
 
 // Check if production is properly configured

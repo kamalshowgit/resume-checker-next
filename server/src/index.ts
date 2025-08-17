@@ -19,11 +19,33 @@ console.log('ENABLE_CHAT_ASSISTANT:', process.env.ENABLE_CHAT_ASSISTANT);
 console.log('ENABLE_JOB_SEARCH:', process.env.ENABLE_JOB_SEARCH);
 console.log('===================================');
 
+// CORS configuration with multiple origins support
+const corsOrigins = (() => {
+  if (process.env.NODE_ENV === 'production') {
+    if (process.env.CORS_ORIGIN) {
+      // Support comma-separated CORS origins
+      return process.env.CORS_ORIGIN.split(',').map(origin => origin.trim());
+    }
+    if (process.env.APP_URL) {
+      // Support comma-separated APP_URL for CORS
+      return process.env.APP_URL.split(',').map(url => url.trim());
+    }
+    // Fallback to common production domains
+    return ['https://resumecheckerai.info', 'https://www.resumecheckerai.info'];
+  }
+  
+  // Development - allow all origins
+  return ['*'];
+})();
+
+console.log('🌐 CORS Origins configured:', corsOrigins);
+
 const app = express();
 app.use(cors({ 
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.CORS_ORIGIN || process.env.APP_URL || 'https://your-domain.com'
-    : '*'
+  origin: corsOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(json({ limit: '5mb' }));
 app.use(urlencoded({ extended: true }));
