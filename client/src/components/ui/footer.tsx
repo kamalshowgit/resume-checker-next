@@ -84,10 +84,10 @@ export function Footer() {
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Have questions? Contact us at
               <Link
-                href="mailto:support@resumecheck.com"
+                href="mailto:rsmchckrspprt@gmail.com"
                 className="ml-1 text-blue-600 hover:underline dark:text-blue-400"
               >
-                support@resumecheck.com
+                rsmchckrspprt@gmail.com
               </Link>
             </p>
           </div>

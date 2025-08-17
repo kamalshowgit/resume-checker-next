@@ -231,7 +231,7 @@ export default function SupportPage() {
                   </h3>
                   <div className="space-y-2">
                     <p className="text-sm text-gray-600">
-                      <strong>Email Support:</strong> support@resumecheck.com
+                      <strong>Email Support:</strong> rsmchckrspprt@gmail.com
                     </p>
                     <p className="text-sm text-gray-600">
                       <strong>Response Time:</strong> Usually within 24 hours
@@ -257,6 +257,26 @@ export default function SupportPage() {
                       <li>• Screenshots if helpful</li>
                     </ul>
                   </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Pricing Information */}
+            <section className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 border border-blue-200">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                💰 Pricing Information
+              </h2>
+              <div className="bg-white rounded-lg p-6 border border-blue-200">
+                <div className="text-center mb-4">
+                  <div className="text-3xl font-bold text-green-600 mb-2">First Analysis: FREE</div>
+                  <p className="text-gray-600 mb-4">Start with a completely free resume analysis. No credit card required.</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-semibold text-blue-600 mb-2">Additional Analyses: ₹49 each</div>
+                  <p className="text-gray-600">After your free analysis, each new resume analysis costs just ₹49. Perfect for job seekers applying to multiple positions.</p>
+                </div>
+                <div className="mt-4 text-center text-sm text-gray-500">
+                  💡 <strong>Tip:</strong> Make the most of your free analysis by uploading your best resume first!
                 </div>
               </div>
             </section>

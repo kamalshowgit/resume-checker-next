@@ -20,88 +20,73 @@ export function PaymentModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
-  // In a real application, this would integrate with Razorpay or Stripe
-  const handlePayment = async () => {
+  // PayPal configuration
+  const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "AaAYXnukym9O07d6-ykRVQ9CfYVCxMMcDDHYKg1SZRRq7HNxOUifg1qlzSFc9URGlm6aE2V_upadewsg";
+  
+  const handlePayPalPayment = async () => {
     setLoading(true);
     setError("");
 
     try {
-      // Create payment order
-      const orderResponse = await axios.post("http://localhost:5000/api/pay/create-order", {
-        deviceId: deviceId
+      // Create PayPal order
+      const orderResponse = await axios.post("http://localhost:4000/api/pay/create-paypal-order", {
+        deviceId: deviceId,
+        amount: 49 // ₹49 in USD equivalent
       });
       
-      if (!orderResponse.data.id) {
-        throw new Error("Failed to create payment order");
+      if (!orderResponse.data.orderID) {
+        throw new Error("Failed to create PayPal order");
       }
 
-      // Check if we're in mock mode
-      if (orderResponse.data.mock) {
-        // Mock payment mode - simulate payment success
-        console.log("🧪 Mock payment mode - simulating payment success");
-        
-        // Simulate payment processing delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Simulate payment verification
-        const verifyResponse = await axios.post("http://localhost:5000/api/pay/verify", {
-          razorpay_order_id: orderResponse.data.id,
-          razorpay_payment_id: `mock_payment_${Date.now()}`,
-          razorpay_signature: "mock_signature",
-          deviceId: deviceId
-        });
-        
-        if (verifyResponse.data.success) {
-          onPaymentSuccess();
-        } else {
-          throw new Error("Mock payment verification failed");
-        }
-      } else {
-        // Real Razorpay payment mode
-        if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
-          throw new Error("Razorpay API key not configured");
-        }
+      // Initialize PayPal payment
+      const paypal = (window as any).paypal;
+      if (!paypal) {
+        throw new Error("PayPal SDK not loaded");
+      }
 
-        // Initialize Razorpay payment
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          amount: 4900, // ₹49.00 in paise
-          currency: "INR",
-          name: "ResumeCheck",
-          description: "Resume Analysis Service",
-          order_id: orderResponse.data.id,
-          handler: async function (response: Record<string, string>) {
-            try {
-              // Verify payment
-              const verifyResponse = await axios.post("http://localhost:5000/api/pay/verify", {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                deviceId: deviceId
-              });
-              
-              if (verifyResponse.data.success) {
-                onPaymentSuccess();
-              } else {
-                throw new Error("Payment verification failed");
-              }
-            } catch (error) {
-              console.error("Payment verification error:", error);
-              setError("Payment verification failed. Please contact support.");
+      paypal.Buttons({
+        createOrder: function(data: any, actions: any) {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '0.60', // $0.60 USD equivalent to ₹49
+                currency_code: 'USD'
+              },
+              description: 'Resume Analysis Service',
+              custom_id: deviceId
+            }]
+          });
+        },
+        onApprove: async function(data: any, actions: any) {
+          try {
+            // Capture the payment
+            const order = await actions.order.capture();
+            
+            // Verify payment with server
+            const verifyResponse = await axios.post("http://localhost:4000/api/pay/verify-paypal", {
+              orderID: order.id,
+              payerID: order.payer.payer_id,
+              deviceId: deviceId,
+              paymentDetails: order
+            });
+            
+            if (verifyResponse.data.success) {
+              onPaymentSuccess();
+            } else {
+              throw new Error("Payment verification failed");
             }
-          },
-          prefill: {
-            email: 'user@example.com', // Default email for Razorpay
-          },
-          theme: {
-            color: "#2563eb",
-          },
-        };
+          } catch (error) {
+            console.error("Payment capture error:", error);
+            setError("Payment verification failed. Please contact support.");
+          }
+        },
+        onError: function(err: any) {
+          console.error("PayPal error:", err);
+          setError("PayPal payment failed. Please try again.");
+          setLoading(false);
+        }
+      }).render('#paypal-button-container');
 
-        const razorpay = new ((window as unknown) as { Razorpay: new (options: Record<string, unknown>) => { open: () => void } }).Razorpay(options);
-        razorpay.open();
-      }
-      
     } catch (error) {
       console.error("Payment error:", error);
       setError("Payment failed. Please try again.");
@@ -109,6 +94,24 @@ export function PaymentModal({
       setLoading(false);
     }
   };
+
+  // Load PayPal SDK
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=USD`;
+    script.async = true;
+    script.onload = () => {
+      console.log('PayPal SDK loaded');
+    };
+    script.onerror = () => {
+      setError('Failed to load PayPal SDK');
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   // Trap focus within modal for accessibility
   useEffect(() => {
@@ -172,26 +175,24 @@ export function PaymentModal({
             </div>
           )}
 
-          <button
-            onClick={handlePayment}
-            disabled={loading}
-            className="mt-6 inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 dark:focus:ring-offset-gray-900"
-          >
-            {loading ? "Processing..." : "Pay ₹49"}
-          </button>
+          {/* PayPal Button Container */}
+          <div id="paypal-button-container" className="mt-6"></div>
 
           <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
-            Secure payment processing. Your payment information is not stored.
+            Secure payment processing by PayPal. Your payment information is not stored.
           </p>
           
-          {/* Mock Payment Indicator */}
-          <div className="mt-4 rounded-lg bg-yellow-50 p-3 dark:bg-yellow-900/20">
-            <div className="flex items-center space-x-2">
-              <span className="text-yellow-600">🧪</span>
-              <span className="text-xs text-yellow-800 dark:text-yellow-200">
-                <strong>Development Mode:</strong> Payment simulation enabled. No real charges will be made.
-              </span>
-            </div>
+          {/* Support Contact */}
+          <div className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
+            Need help? Contact us at: <a href="mailto:rsmchckrspprt@gmail.com" className="text-blue-600 hover:underline">rsmchckrspprt@gmail.com</a>
+          </div>
+          
+          {/* PayPal Branding */}
+          <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-gray-400">
+            <span>Powered by</span>
+            <svg className="h-4 w-16" viewBox="0 0 100 20" fill="currentColor">
+              <path d="M20.5,10.5c0-5.5,4.5-10,10-10s10,4.5,10,10s-4.5,10-10,10S20.5,15.5,20.5,10.5z M25.5,10.5c0,2.8,2.2,5,5,5s5-2.2,5-5s-2.2-5-5-5S25.5,7.7,25.5,10.5z"/>
+            </svg>
           </div>
         </div>
       </div>

@@ -43,6 +43,14 @@ export interface PaymentResponse {
   error?: string;
 }
 
+export interface PaymentStatusResponse {
+  success: boolean;
+  requiresPayment?: boolean;
+  analysisCount?: number;
+  deviceId?: string;
+  error?: string;
+}
+
 export interface ServerStatusResponse {
   status: 'online' | 'offline' | 'checking';
   timestamp: string;
@@ -322,6 +330,22 @@ class APIService {
     } catch (error: unknown) {
       console.error('Payment verification failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to verify payment';
+      const responseError = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      return {
+        success: false,
+        error: responseError || errorMessage,
+      };
+    }
+  }
+
+  // Check payment status
+  async checkPaymentStatus(deviceId: string): Promise<PaymentStatusResponse> {
+    try {
+      const response: AxiosResponse<PaymentStatusResponse> = await this.api.get(`/api/pay/status/${deviceId}`);
+      return response.data;
+    } catch (error: unknown) {
+      console.error('Failed to check payment status:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to check payment status';
       const responseError = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
       return {
         success: false,

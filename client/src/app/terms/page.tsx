@@ -299,6 +299,47 @@ export default function TermsPage() {
               </div>
             </section>
 
+            {/* Pricing and Payment Terms */}
+            <section className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 border border-blue-200">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                💰 Pricing and Payment Terms
+              </h2>
+              <div className="bg-white rounded-lg p-6 border border-blue-200">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600 mb-3">First Analysis: FREE</div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Your first resume analysis is completely free with no credit card required.
+                    </p>
+                    <div className="bg-green-100 p-3 rounded-lg">
+                      <p className="text-xs text-green-800">
+                        ✅ Full ATS analysis<br/>
+                        ✅ Optimization tips<br/>
+                        ✅ No hidden fees
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600 mb-3">₹49 per Analysis</div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      After your free analysis, each new resume analysis costs ₹49.
+                    </p>
+                    <div className="bg-blue-100 p-3 rounded-lg">
+                      <p className="text-xs text-blue-800">
+                        💡 Multiple resumes<br/>
+                        💡 Job applications<br/>
+                        💡 Resume improvements
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 text-center text-sm text-gray-500">
+                  <strong>Payment:</strong> All payments are processed securely through PayPal. Prices are in Indian Rupees (₹).
+                </div>
+              </div>
+            </section>
+
             {/* Contact Information */}
             <section className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">
@@ -307,8 +348,8 @@ export default function TermsPage() {
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <p className="text-sm text-gray-600">
                   If you have questions about these terms, please contact us at{' '}
-                  <a href="mailto:legal@resumecheck.com" className="text-blue-600 hover:underline">
-                    legal@resumecheck.com
+                  <a href="mailto:rsmchckrspprt@gmail.com" className="text-blue-600 hover:underline">
+                    rsmchckrspprt@gmail.com
                   </a>
                 </p>
               </div>

@@ -77,6 +77,35 @@ const ContextAwareUploader: React.FC = () => {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Check payment status before allowing analysis
+  const checkPaymentStatus = async (): Promise<boolean> => {
+    try {
+      // Check if user has already analyzed a resume (repeat user)
+      if (state.resumeData && state.resumeData.resumeId) {
+        // Generate device ID
+        const deviceId = getDeviceId();
+        
+        // Check payment status from server
+        const response = await apiService.checkPaymentStatus(deviceId);
+        
+        if (response.requiresPayment) {
+          // Show payment modal
+          setPaymentState({
+            showPaymentModal: true,
+            deviceId,
+            analysisCount: response.analysisCount || 1,
+          });
+          return false; // Payment required
+        }
+      }
+      return true; // No payment required
+    } catch (error) {
+      console.error('Payment status check failed:', error);
+      // Allow analysis to continue if payment check fails
+      return true;
+    }
+  };
+
   // Generate context-aware upload guidance
   const getUploadGuidance = () => {
     if (state.resumeData) {
@@ -297,6 +326,13 @@ const ContextAwareUploader: React.FC = () => {
 
   const handleFileUpload = async (file: File) => {
     try {
+      // Check payment status first for repeat users
+      const canProceed = await checkPaymentStatus();
+      if (!canProceed) {
+        // Payment modal is already shown by checkPaymentStatus
+        return;
+      }
+
       // Reset states
       setUploadState({
         isUploading: true,

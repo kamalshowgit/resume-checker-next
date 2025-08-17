@@ -10,7 +10,7 @@ export default function ContactPage() {
     {
       icon: FiMail,
       title: "Email Us",
-      details: "support@resumecheck.com",
+      details: "rsmchckrspprt@gmail.com",
       description: "Get help with your resume analysis"
     },
     {
@@ -52,7 +52,7 @@ export default function ContactPage() {
         },
         {
           "@type": "ContactPoint",
-          "email": "support@resumecheck.com",
+          "email": "rsmchckrspprt@gmail.com",
           "contactType": "customer service"
         }
       ],
@@ -122,6 +122,51 @@ export default function ContactPage() {
                     </p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Information */}
+        <section className="py-16 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                💰 Simple, Transparent Pricing
+              </h2>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-blue-200">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-green-600 mb-4">First Analysis: FREE</div>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Start with a completely free resume analysis. No credit card required.
+                    </p>
+                    <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
+                      <p className="text-sm text-green-800 dark:text-green-200">
+                        ✅ Full ATS analysis<br/>
+                        ✅ Optimization tips<br/>
+                        ✅ No hidden fees
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-blue-600 mb-4">₹49 per Analysis</div>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      After your free analysis, each new resume analysis costs just ₹49.
+                    </p>
+                    <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-lg">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        💡 Perfect for multiple resumes<br/>
+                        💡 Job seekers applying widely<br/>
+                        💡 Resume improvements
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  💡 <strong>Pro Tip:</strong> Make the most of your free analysis by uploading your best resume first!
+                </div>
               </div>
             </div>
           </div>

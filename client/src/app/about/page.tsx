@@ -53,7 +53,7 @@ export default function AboutPage() {
                 "contactPoint": {
                   "@type": "ContactPoint",
                   "contactType": "customer service",
-                  "url": "https://resumecheck.com/contact"
+                  "url": "mailto:rsmchckrspprt@gmail.com"
                 }
               },
               "breadcrumb": {
@@ -179,9 +179,32 @@ export default function AboutPage() {
                   <div className="text-gray-600 dark:text-gray-400">Industries Served</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-600 mb-2">4.9/5</div>
-                  <div className="text-gray-600 dark:text-gray-400">User Rating</div>
+                  <div className="text-3xl font-bold text-orange-600 mb-2">₹49</div>
+                  <div className="text-gray-600 dark:text-gray-400">Per Analysis</div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-4xl text-center">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                Simple, Transparent Pricing
+              </h2>
+              <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 p-8 rounded-2xl">
+                <div className="text-4xl font-bold text-blue-600 mb-4">First Analysis: FREE</div>
+                <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                  Start your journey with a completely free resume analysis. No credit card required.
+                </p>
+                <div className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Additional Analyses: ₹49 each
+                </div>
+                <p className="text-gray-600 dark:text-gray-400">
+                  After your free analysis, each new resume analysis costs just ₹49. Perfect for job seekers applying to multiple positions or wanting to improve their resume.
+                </p>
               </div>
             </div>
           </div>

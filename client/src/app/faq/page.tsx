@@ -173,6 +173,56 @@ export default function FAQPage() {
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl">
+              {/* Pricing FAQ Section */}
+              <div className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <FiHelpCircle className="h-6 w-6 text-green-600" />
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Pricing & Payment
+                  </h2>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="px-6 py-4">
+                      <div className="font-semibold text-gray-900 dark:text-white mb-2">
+                        How much does ResumeCheck cost?
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                        <div className="mb-3">
+                          <strong>First Analysis: FREE</strong> - Start with a completely free resume analysis. No credit card required.
+                        </div>
+                        <div>
+                          <strong>Additional Analyses: ₹49 each</strong> - After your free analysis, each new resume analysis costs just ₹49. Perfect for job seekers applying to multiple positions.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="px-6 py-4">
+                      <div className="font-semibold text-gray-900 dark:text-white mb-2">
+                        Is the first analysis really free?
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                        Yes! Your first resume analysis is completely free with no hidden fees. You get the full analysis including ATS score, suggestions, and optimization tips at no cost.
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div className="px-6 py-4">
+                      <div className="font-semibold text-gray-900 dark:text-white mb-2">
+                        When do I need to pay ₹49?
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                        You only pay ₹49 when you want to analyze a second resume or more. The first analysis is always free. This pricing model is designed to help you get started without any barriers.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {filteredCategories.map((category, categoryIndex) => (
                 <div key={categoryIndex} className="mb-12">
                   <div className="flex items-center gap-3 mb-6">

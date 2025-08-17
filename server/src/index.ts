@@ -20,7 +20,11 @@ console.log('ENABLE_JOB_SEARCH:', process.env.ENABLE_JOB_SEARCH);
 console.log('===================================');
 
 const app = express();
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+app.use(cors({ 
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.CORS_ORIGIN || process.env.APP_URL || 'https://your-domain.com'
+    : '*'
+}));
 app.use(json({ limit: '5mb' }));
 app.use(urlencoded({ extended: true }));
 
