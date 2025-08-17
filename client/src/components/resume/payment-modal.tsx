@@ -7,7 +7,7 @@ import axios from "axios";
 interface PaymentModalProps {
   onClose: () => void;
   onPaymentSuccess: () => void;
-  deviceId: string;
+  email: string;
   analysisCount: number;
   isRetryAttempt?: boolean;
 }
@@ -15,7 +15,7 @@ interface PaymentModalProps {
 export function PaymentModal({
   onClose,
   onPaymentSuccess,
-  deviceId,
+  email,
   analysisCount,
   isRetryAttempt,
 }: PaymentModalProps) {
@@ -32,7 +32,7 @@ export function PaymentModal({
     try {
       // Create PayPal order
       const orderResponse = await axios.post("http://localhost:4000/api/pay/create-paypal-order", {
-        deviceId: deviceId,
+        email: email,
         amount: 49 // ₹49 in USD equivalent
       });
       
@@ -55,7 +55,7 @@ export function PaymentModal({
                 currency_code: 'USD'
               },
               description: 'Resume Analysis Service',
-              custom_id: deviceId
+              custom_id: email
             }]
           });
         },
@@ -68,7 +68,7 @@ export function PaymentModal({
             const verifyResponse = await axios.post("http://localhost:4000/api/pay/verify-paypal", {
               orderID: order.id,
               payerID: order.payer.payer_id,
-              deviceId: deviceId,
+              email: email,
               paymentDetails: order
             });
             

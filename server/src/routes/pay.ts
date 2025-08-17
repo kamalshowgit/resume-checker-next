@@ -47,10 +47,10 @@ router.get('/key', (_req, res) => {
 // Create PayPal order
 router.post('/create-paypal-order', async (req, res) => {
   try {
-    const { deviceId, amount } = req.body;
+    const { email, amount } = req.body;
     
-    if (!deviceId) {
-      return res.status(400).json({ error: 'Device ID is required' });
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
     }
 
     const accessToken = await getPayPalAccessToken();
@@ -70,7 +70,7 @@ router.post('/create-paypal-order', async (req, res) => {
             value: '0.60' // $0.60 USD equivalent to ₹49
           },
           description: 'Resume Analysis Service',
-          custom_id: deviceId
+          custom_id: email
         }],
         application_context: {
           return_url: `${process.env.APP_URL || 'http://localhost:3000'}/payment/success`,
@@ -260,6 +260,143 @@ router.post('/verify', async (req, res) => {
   } catch (error) {
     console.error('Legacy payment verification error:', error);
     res.status(500).json({ error: 'Payment verification failed' });
+  }
+});
+
+// Email-based payment status check
+router.get('/email-status/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Check email analysis status
+    const emailStatus = db.getEmailAnalysisStatus(email);
+    
+    if (!emailStatus) {
+      // New email, no analysis history
+      return res.json({
+        success: true,
+        email,
+        analysisCount: 0,
+        requiresPayment: false
+      });
+    }
+
+    // Check if email can perform free analysis
+    const canPerformFreeAnalysis = db.canPerformFreeAnalysisByEmail(email);
+    
+    if (canPerformFreeAnalysis) {
+      // Email can perform free analysis
+      return res.json({
+        success: true,
+        email,
+        analysisCount: emailStatus.analysisCount,
+        requiresPayment: false
+      });
+    }
+
+    // Check if email is paid user
+    if (emailStatus.isPaidUser) {
+      // Email is paid, no payment required
+      return res.json({
+        success: true,
+        email,
+        analysisCount: emailStatus.analysisCount,
+        requiresPayment: false
+      });
+    }
+
+    // Email needs payment for additional analysis
+    return res.json({
+      success: true,
+      email,
+      analysisCount: emailStatus.analysisCount,
+      requiresPayment: true,
+      message: 'You have used your free analysis. Please pay ₹49 for additional analyses.'
+    });
+
+  } catch (error) {
+    console.error('Email status check error:', error);
+    res.status(500).json({ error: 'Failed to check email status' });
+  }
+});
+
+// Send OTP to email
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP in database with expiration (15 minutes)
+    db.storeOTP(email, otp);
+    
+    // TODO: Send OTP via email service (nodemailer, SendGrid, etc.)
+    // For now, log it to console for testing
+    console.log(`📧 OTP for ${email}: ${otp}`);
+    
+    res.json({
+      success: true,
+      message: 'OTP sent successfully'
+    });
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required' });
+    }
+
+    // Verify OTP
+    const isValid = db.verifyOTP(email, otp);
+    
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    // Get email analysis status
+    const emailStatus = db.getEmailAnalysisStatus(email);
+    
+    if (!emailStatus) {
+      // New email, create status
+      db.createEmailAnalysisStatus(email);
+      return res.json({
+        success: true,
+        email,
+        analysisCount: 0,
+        requiresPayment: false
+      });
+    }
+
+    // Check if payment is required
+    const canPerformFreeAnalysis = db.canPerformFreeAnalysisByEmail(email);
+    
+    return res.json({
+      success: true,
+      email,
+      analysisCount: emailStatus.analysisCount,
+      requiresPayment: !canPerformFreeAnalysis
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ error: 'Failed to verify OTP' });
   }
 });
 

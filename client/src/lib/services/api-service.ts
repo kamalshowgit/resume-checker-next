@@ -53,6 +53,28 @@ export interface PaymentStatusResponse {
   isRetryAttempt?: boolean;
 }
 
+export interface EmailStatusResponse {
+  success: boolean;
+  analysisCount: number;
+  requiresPayment: boolean;
+  email: string;
+  error?: string;
+}
+
+export interface OTPResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+export interface EmailVerificationResponse {
+  success: boolean;
+  email: string;
+  analysisCount: number;
+  requiresPayment: boolean;
+  error?: string;
+}
+
 export interface ServerStatusResponse {
   status: 'online' | 'offline' | 'checking';
   timestamp: string;
@@ -542,6 +564,86 @@ class APIService {
         status: 'offline',
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  // Email-based payment status check
+  async checkEmailStatus(email: string): Promise<EmailStatusResponse> {
+    try {
+      const response: AxiosResponse<EmailStatusResponse> = await this.api.get(`/api/pay/email-status/${encodeURIComponent(email)}`);
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          // New email, no analysis history
+          return {
+            success: true,
+            email,
+            analysisCount: 0,
+            requiresPayment: false
+          };
+        }
+        return {
+          success: false,
+          email,
+          analysisCount: 0,
+          requiresPayment: false,
+          error: error.response?.data?.error || 'Failed to check email status'
+        };
+      }
+      return {
+        success: false,
+        email,
+        analysisCount: 0,
+        requiresPayment: false,
+        error: 'Network error occurred'
+      };
+    }
+  }
+
+  // Send OTP to email
+  async sendOTP(email: string): Promise<OTPResponse> {
+    try {
+      const response: AxiosResponse<OTPResponse> = await this.api.post('/api/pay/send-otp', { email });
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        return {
+          success: false,
+          message: 'Failed to send OTP',
+          error: error.response?.data?.error || 'Network error occurred'
+        };
+      }
+      return {
+        success: false,
+        message: 'Failed to send OTP',
+        error: 'Network error occurred'
+      };
+    }
+  }
+
+  // Verify OTP
+  async verifyOTP(email: string, otp: string): Promise<EmailVerificationResponse> {
+    try {
+      const response: AxiosResponse<EmailVerificationResponse> = await this.api.post('/api/pay/verify-otp', { email, otp });
+      return response.data;
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        return {
+          success: false,
+          email,
+          analysisCount: 0,
+          requiresPayment: false,
+          error: error.response?.data?.error || 'Network error occurred'
+        };
+      }
+      return {
+        success: false,
+        email,
+        analysisCount: 0,
+        requiresPayment: false,
+        error: 'Network error occurred'
       };
     }
   }

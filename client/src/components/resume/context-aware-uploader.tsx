@@ -5,7 +5,7 @@ import { FiUpload, FiFileText, FiCheckCircle, FiAlertCircle, FiInfo, FiTarget } 
 import { useResumeContext } from "../../lib/context/resume-context";
 import { apiService } from "../../lib/services/api-service";
 import { PaymentModal } from "./payment-modal";
-import { getDeviceId } from "../../lib/utils/device-id";
+import { EmailVerificationModal } from "../ui/email-verification-modal";
 import { AnalysisStatus } from "./analysis-status";
 
 interface UploadState {
@@ -17,7 +17,7 @@ interface UploadState {
 
 interface PaymentState {
   showPaymentModal: boolean;
-  deviceId: string;
+  email: string;
   analysisCount: number;
   isRetryAttempt: boolean;
 }
@@ -68,10 +68,13 @@ const ContextAwareUploader: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
   const [paymentState, setPaymentState] = useState<PaymentState>({
     showPaymentModal: false,
-    deviceId: '',
+    email: '',
     analysisCount: 0,
     isRetryAttempt: false,
   });
+
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
 
   const [analysisState, setAnalysisState] = useState<AnalysisState>({
     status: 'complete',
@@ -82,12 +85,17 @@ const ContextAwareUploader: React.FC = () => {
   // Check payment status before allowing analysis
   const checkPaymentStatus = async (): Promise<boolean> => {
     try {
-      // Always check payment status for repeat users
-      const deviceId = getDeviceId();
-      console.log('🔍 Checking payment status for device:', deviceId);
+      // If no email is verified, show email verification first
+      if (!verifiedEmail) {
+        console.log('📧 No email verified - showing email verification');
+        setShowEmailVerification(true);
+        return false;
+      }
+
+      console.log('🔍 Checking payment status for email:', verifiedEmail);
       
-      // Check payment status from server
-      const response = await apiService.checkPaymentStatus(deviceId);
+      // Check payment status from server using email
+      const response = await apiService.checkEmailStatus(verifiedEmail);
       console.log('📊 Payment status response:', response);
       
       if (response.requiresPayment) {
@@ -95,9 +103,9 @@ const ContextAwareUploader: React.FC = () => {
         // Show payment modal
         setPaymentState({
           showPaymentModal: true,
-          deviceId,
+          email: verifiedEmail,
           analysisCount: response.analysisCount || 1,
-          isRetryAttempt: response.isRetryAttempt || false,
+          isRetryAttempt: false,
         });
         return false; // Payment required
       }
@@ -405,12 +413,9 @@ const ContextAwareUploader: React.FC = () => {
         clearInterval(progressInterval);
         setUploadState(prev => ({ ...prev, isUploading: false, progress: 0 }));
         
-        // Generate device ID using utility
-        const deviceId = getDeviceId();
-        
         setPaymentState({
           showPaymentModal: true,
-          deviceId,
+          email: verifiedEmail || '',
           analysisCount: response.analysisCount || 1,
           isRetryAttempt: response.isRetryAttempt || false,
         });
@@ -536,16 +541,16 @@ const ContextAwareUploader: React.FC = () => {
   const tips = getContextTips();
 
   return (
-    <div className="space-y-6">
+    <div className="mobile-space-y">
       {/* Context-Aware Guidance */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="flex items-start space-x-3">
+      <div className="card-mobile">
+        <div className="flex flex-col sm:flex-row items-start space-y-3 sm:space-y-0 sm:space-x-3">
           {guidance.icon}
           <div>
             <h3 className={`font-semibold ${guidance.color}`}>
               {guidance.title}
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="mobile-text-base text-gray-600 dark:text-gray-400">
               {guidance.message}
             </p>
           </div>
@@ -554,7 +559,7 @@ const ContextAwareUploader: React.FC = () => {
 
       {/* Upload Area */}
       <div
-        className={`relative rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+        className={`relative rounded-lg border-2 border-dashed mobile-p text-center transition-colors ${
           dragActive
             ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
             : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
@@ -573,13 +578,13 @@ const ContextAwareUploader: React.FC = () => {
         />
 
         {uploadState.isUploading && (
-          <div className="space-y-4">
+          <div className="mobile-space-y">
             <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600"></div>
             <div>
-              <p className="text-lg font-medium text-gray-900 dark:text-white">
+              <p className="mobile-text-lg font-medium text-gray-900 dark:text-white">
                 Analyzing your resume...
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="mobile-text-base text-gray-600 dark:text-gray-400">
                 This may take a few moments
               </p>
             </div>
@@ -593,32 +598,32 @@ const ContextAwareUploader: React.FC = () => {
         )}
 
         {uploadState.success ? (
-          <div className="space-y-4">
+          <div className="mobile-space-y">
             <FiCheckCircle className="mx-auto h-16 w-16 text-green-500" />
             <div>
-              <p className="text-lg font-medium text-green-900 dark:text-green-100">
+              <p className="mobile-text-lg font-medium text-green-900 dark:text-green-100">
                 Resume uploaded successfully!
               </p>
-              <p className="text-sm text-green-600 dark:text-green-400">
+              <p className="mobile-text-base text-green-600 dark:text-green-400">
                 Your resume is being analyzed
               </p>
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="mobile-space-y">
             <FiUpload className="mx-auto h-16 w-16 text-gray-400" />
             <div>
-              <p className="text-lg font-medium text-gray-900 dark:text-white">
+              <p className="mobile-text-lg font-medium text-gray-900 dark:text-white">
                 Drop your resume here, or{" "}
                 <button
                   type="button"
                   onClick={triggerFileInput}
-                  className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                  className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 underline"
                 >
                   browse files
                 </button>
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="mobile-text-base text-gray-600 dark:text-gray-400">
                 We&apos;ll analyze it and provide personalized recommendations
               </p>
             </div>
@@ -639,13 +644,13 @@ const ContextAwareUploader: React.FC = () => {
 
       {/* Upload Progress with Steps */}
       {uploadState.isUploading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg mobile-p max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="text-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="mobile-text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Processing Your Resume
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="mobile-text-base text-gray-600 dark:text-gray-400">
                 Please wait while we analyze your document...
               </p>
             </div>
@@ -665,7 +670,7 @@ const ContextAwareUploader: React.FC = () => {
             </div>
 
             {/* Upload Steps */}
-            <div className="space-y-3">
+            <div className="mobile-space-y-sm">
               {uploadSteps.steps.map((step) => (
                 <div key={step.id} className="flex items-center space-x-3">
                   <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
@@ -702,7 +707,7 @@ const ContextAwareUploader: React.FC = () => {
             <div className="mt-6 text-center">
               <button
                 onClick={() => setUploadState(prev => ({ ...prev, isUploading: false, progress: 0 }))}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                className="btn-mobile-secondary"
               >
                 Cancel Upload
               </button>
@@ -712,15 +717,15 @@ const ContextAwareUploader: React.FC = () => {
       )}
 
       {/* Context-Aware Requirements */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="card-mobile">
         <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
           File Requirements
         </h3>
-        <ul className="space-y-2">
+        <ul className="mobile-space-y-sm">
           {requirements.map((requirement, index) => (
             <li key={index} className="flex items-center space-x-2">
-              <FiCheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <FiCheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+              <span className="mobile-text-base text-gray-600 dark:text-gray-400">
                 {requirement}
               </span>
             </li>
@@ -729,15 +734,15 @@ const ContextAwareUploader: React.FC = () => {
       </div>
 
       {/* Context-Aware Tips */}
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="card-mobile">
         <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
           💡 Pro Tips for Better Results
         </h3>
-        <ul className="space-y-2">
+        <ul className="mobile-space-y-sm">
           {tips.map((tip, index) => (
             <li key={index} className="flex items-start space-x-2">
               <FiInfo className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <span className="mobile-text-base text-gray-600 dark:text-gray-400">
                 {tip}
               </span>
             </li>
@@ -747,11 +752,11 @@ const ContextAwareUploader: React.FC = () => {
 
       {/* Recent Activity Context */}
       {state.recentActions.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="card-mobile">
           <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
             Recent Activity
           </h3>
-          <div className="space-y-2">
+          <div className="mobile-space-y-sm">
             {state.recentActions.slice(0, 3).map((action, index) => (
               <div key={index} className="flex items-center space-x-2 text-sm">
                 <div className="h-2 w-2 rounded-full bg-blue-500"></div>
@@ -776,11 +781,29 @@ const ContextAwareUploader: React.FC = () => {
         <PaymentModal
           onClose={handlePaymentClose}
           onPaymentSuccess={handlePaymentSuccess}
-          deviceId={paymentState.deviceId}
+          email={paymentState.email}
           analysisCount={paymentState.analysisCount}
           isRetryAttempt={paymentState.isRetryAttempt}
         />
       )}
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        isOpen={showEmailVerification}
+        onClose={() => setShowEmailVerification(false)}
+        onEmailVerified={(email, isFirstTime) => {
+          setVerifiedEmail(email);
+          setShowEmailVerification(false);
+          if (isFirstTime) {
+            // First time user, proceed with analysis
+            console.log('✅ First time user - proceeding with analysis');
+          } else {
+            // Repeat user, check payment status
+            console.log('💰 Repeat user - checking payment status');
+            checkPaymentStatus();
+          }
+        }}
+      />
     </div>
   );
 };

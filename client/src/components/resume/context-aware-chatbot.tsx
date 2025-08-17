@@ -303,7 +303,7 @@ const ContextAwareChatbot: React.FC = () => {
   return (
     <div 
       ref={chatbotRef}
-      className={`fixed ${isExpanded ? 'bottom-4 right-4 z-50 w-[350px] md:w-[400px]' : 'bottom-4 right-4 z-50'}`}
+      className={`fixed ${isExpanded ? 'bottom-4 right-4 z-50 w-[calc(100vw-2rem)] sm:w-[350px] md:w-[400px] max-w-[calc(100vw-2rem)]' : 'bottom-4 right-4 z-50'}`}
     >
       {/* Collapsed chatbot - small circular icon */}
       {!isExpanded && (
@@ -318,7 +318,7 @@ const ContextAwareChatbot: React.FC = () => {
 
       {/* Expanded chatbot - full interface */}
       {isExpanded && (
-        <div className="rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900 overflow-hidden transition-all duration-300 ease-in-out">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-800 dark:bg-gray-900 overflow-hidden transition-all duration-300 ease-in-out max-h-[80vh] flex flex-col">
           {/* Chatbot header */}
           <div className="border-b border-gray-200 p-3 dark:border-gray-800 bg-blue-600 text-white">
             <div className="flex items-center justify-between">
@@ -337,7 +337,7 @@ const ContextAwareChatbot: React.FC = () => {
                 )}
                 <button
                   onClick={toggleChatbot}
-                  className="text-white hover:bg-blue-700 rounded p-1"
+                  className="text-white hover:bg-blue-700 rounded p-1 transition-colors"
                   aria-label="Minimize chatbot"
                 >
                   <FiMinimize2 className="h-4 w-4" />
@@ -352,7 +352,7 @@ const ContextAwareChatbot: React.FC = () => {
           </div>
 
           {/* Chatbot messages */}
-          <div className="flex h-[400px] flex-col">
+          <div className="flex flex-1 flex-col min-h-0">
             <div className="flex-1 space-y-3 overflow-y-auto p-3 bg-gray-50 dark:bg-gray-900">
               {messages.map((message) => (
                 <div
@@ -367,7 +367,7 @@ const ContextAwareChatbot: React.FC = () => {
                     </div>
                   )}
                   <div
-                    className={`max-w-[75%] rounded-lg px-3 py-2 ${
+                    className={`max-w-[85%] sm:max-w-[75%] rounded-lg px-3 py-2 ${
                       message.sender === "user"
                         ? "bg-blue-600 text-white rounded-tr-none"
                         : "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white rounded-tl-none"
@@ -398,7 +398,7 @@ const ContextAwareChatbot: React.FC = () => {
                   <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center mr-2 flex-shrink-0">
                     <FiMessageSquare className="h-4 w-4 text-white" />
                   </div>
-                  <div className="max-w-[75%] rounded-lg bg-white px-3 py-2 shadow-sm dark:bg-gray-800 rounded-tl-none">
+                  <div className="max-w-[85%] sm:max-w-[75%] rounded-lg bg-white px-3 py-2 shadow-sm dark:bg-gray-800 rounded-tl-none">
                     <div className="flex space-x-2">
                       <div className="h-2 w-2 animate-pulse rounded-full bg-gray-400 dark:bg-gray-500"></div>
                       <div className="h-2 w-2 animate-pulse rounded-full bg-gray-400 dark:bg-gray-500 [animation-delay:0.2s]"></div>
@@ -442,13 +442,13 @@ const ContextAwareChatbot: React.FC = () => {
                     ? "Ask about your resume or career advice..."
                     : "Ask a career question..."
                   }
-                  className="flex-1 resize-none rounded-full border border-gray-300 bg-white px-4 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                  className="flex-1 resize-none rounded-full border border-gray-300 bg-white px-4 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 min-h-[44px]"
                   rows={1}
                 />
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isLoading}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-gray-900"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-gray-900 transition-colors"
                 >
                   <FiSend className="h-4 w-4" />
                 </button>

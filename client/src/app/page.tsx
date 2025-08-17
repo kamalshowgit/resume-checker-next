@@ -18,40 +18,40 @@ const HomeContent = () => {
       />
       
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="container mx-auto px-4 py-12">
-          {/* Hero Section */}
-          <div className="mb-12 text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl">
+        <div className="container mx-auto mobile-px mobile-py">
+          {/* Hero Section - Mobile Optimized */}
+          <div className="mb-8 sm:mb-12 text-center">
+            <h1 className="mobile-text-3xl sm:mobile-text-4xl lg:mobile-text-4xl font-bold tracking-tight text-gray-900 dark:text-white leading-tight">
               AI-Powered Resume
-              <span className="block text-blue-600 dark:text-blue-400">
+              <span className="block text-blue-600 dark:text-blue-400 mt-2">
                 Analysis & Optimization
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
+            <p className="mx-auto mt-4 sm:mt-6 max-w-2xl mobile-text-base text-gray-600 dark:text-gray-400">
               Get detailed resume analysis with section-by-section scores and AI-powered career advice.
             </p>
           </div>
 
-          {/* Pricing Section */}
-          <div className="mb-12">
-            <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-2xl p-8 border border-blue-200">
+          {/* Pricing Section - Mobile Optimized */}
+          <div className="mb-8 sm:mb-12">
+            <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-xl sm:rounded-2xl mobile-p border border-blue-200">
               <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                <h2 className="mobile-text-2xl sm:mobile-text-3xl font-bold text-gray-900 dark:text-white mb-4">
                   Simple, Transparent Pricing
                 </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-400">
+                <p className="mobile-text-base text-gray-600 dark:text-gray-400">
                   Start free, then pay only for what you need
                 </p>
               </div>
               
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-green-200 shadow-lg">
+              <div className="mobile-grid mobile-grid-cols-1 sm:mobile-grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
+                <div className="card-mobile border-green-200">
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-green-600 mb-3">First Analysis: FREE</div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    <div className="mobile-text-2xl sm:mobile-text-3xl lg:mobile-text-4xl font-bold text-green-600 mb-3">First Analysis: FREE</div>
+                    <p className="mobile-text-base text-gray-600 dark:text-gray-400 mb-4">
                       Start with a completely free resume analysis. No credit card required.
                     </p>
-                    <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
+                    <div className="bg-green-100 dark:bg-green-900/20 mobile-p rounded-lg">
                       <p className="text-sm text-green-800 dark:text-green-200">
                         Full ATS analysis<br/>
                         Optimization tips<br/>
@@ -62,13 +62,13 @@ const HomeContent = () => {
                   </div>
                 </div>
                 
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-blue-200 shadow-lg">
+                <div className="card-mobile border-blue-200">
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-600 mb-3">₹49 per Analysis</div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    <div className="mobile-text-2xl sm:mobile-text-3xl lg:mobile-text-4xl font-bold text-blue-600 mb-3">₹49 per Analysis</div>
+                    <p className="mobile-text-base text-gray-600 dark:text-gray-400 mb-4">
                       After your free analysis, each new resume analysis costs just ₹49.
                     </p>
-                    <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-lg">
+                    <div className="bg-blue-100 dark:bg-blue-900/20 mobile-p rounded-lg">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
                         Multiple resumes<br/>
                         Job applications<br/>
@@ -88,12 +88,12 @@ const HomeContent = () => {
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Main Content - Mobile Optimized */}
           <div className="flex flex-col">
             {/* Resume Upload Section - Only show when no resume is uploaded */}
             {!state.resumeData && (
-              <div className="mb-8">
-                <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+              <div className="mb-6 sm:mb-8">
+                <h2 className="mb-4 sm:mb-6 mobile-text-xl sm:mobile-text-2xl font-bold text-gray-900 dark:text-white">
                   Resume Analysis
                 </h2>
                 <ContextAwareUploader />
@@ -103,8 +103,8 @@ const HomeContent = () => {
             {state.resumeData ? (
               <div className="flex flex-col lg:flex-row">
                 {/* Main Analysis Section - Takes most of the screen */}
-                <div className="flex-grow mb-8 lg:mb-0 lg:pr-8">
-                  <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="flex-grow mb-6 sm:mb-8 lg:mb-0 lg:pr-8">
+                  <h2 className="mb-4 sm:mb-6 mobile-text-xl sm:mobile-text-2xl font-bold text-gray-900 dark:text-white">
                     Detailed Analysis
                   </h2>
                   <ResumeAnalysis 
@@ -148,8 +148,8 @@ const HomeContent = () => {
                 </div>
               </div>
             ) : (
-              <div className="text-center p-12 border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-lg text-gray-600 dark:text-gray-400">
+              <div className="text-center mobile-p border-2 border-dashed border-gray-300 rounded-lg">
+                <p className="mobile-text-base text-gray-600 dark:text-gray-400">
                   Upload your resume to see detailed analysis and get AI-powered career advice.
                 </p>
               </div>

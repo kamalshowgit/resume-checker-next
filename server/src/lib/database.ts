@@ -101,6 +101,37 @@ class DatabaseService {
     this.db.exec(createDeviceAnalysisTable);
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_device_analysis_deviceId ON device_analysis(deviceId)');
     
+    // Create email analysis tracking table
+    const createEmailAnalysisTable = `
+      CREATE TABLE IF NOT EXISTS email_analysis (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        analysisCount INTEGER DEFAULT 0,
+        isPaidUser BOOLEAN DEFAULT FALSE,
+        lastAnalysisDate DATETIME,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    this.db.exec(createEmailAnalysisTable);
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_email_analysis_email ON email_analysis(email)');
+    
+    // Create OTP storage table
+    const createOTPTable = `
+      CREATE TABLE IF NOT EXISTS otp_storage (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL,
+        otp TEXT NOT NULL,
+        expiresAt DATETIME NOT NULL,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    this.db.exec(createOTPTable);
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_otp_email ON otp_storage(email)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_otp_expires ON otp_storage(expiresAt)');
+    
     console.log('📊 Database initialized successfully');
   }
 
@@ -449,6 +480,114 @@ class DatabaseService {
   getDeviceAnalysisStatus(deviceId: string): DeviceAnalysis | null {
     const stmt = this.db.prepare('SELECT * FROM device_analysis WHERE deviceId = ?');
     return stmt.get(deviceId) as DeviceAnalysis | null;
+  }
+
+  /**
+   * Email-based analysis methods
+   */
+  
+  /**
+   * Check if email can perform free analysis
+   */
+  canPerformFreeAnalysisByEmail(email: string): boolean {
+    const stmt = this.db.prepare('SELECT analysisCount FROM email_analysis WHERE email = ?');
+    const result = stmt.get(email) as { analysisCount: number } | undefined;
+    
+    if (!result) {
+      // New email, can perform free analysis
+      return true;
+    }
+    
+    return result.analysisCount === 0;
+  }
+
+  /**
+   * Get email analysis status
+   */
+  getEmailAnalysisStatus(email: string): any {
+    const stmt = this.db.prepare('SELECT * FROM email_analysis WHERE email = ?');
+    return stmt.get(email) as any;
+  }
+
+  /**
+   * Create email analysis status
+   */
+  createEmailAnalysisStatus(email: string): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO email_analysis (email, analysisCount, lastAnalysisDate, updatedAt) 
+      VALUES (?, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `);
+    
+    stmt.run(email);
+  }
+
+  /**
+   * Increment email analysis count
+   */
+  incrementEmailAnalysisCount(email: string): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO email_analysis (email, analysisCount, lastAnalysisDate, updatedAt) 
+      VALUES (?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET 
+        analysisCount = analysisCount + 1,
+        lastAnalysisDate = CURRENT_TIMESTAMP,
+        updatedAt = CURRENT_TIMESTAMP
+    `);
+    
+    stmt.run(email);
+  }
+
+  /**
+   * Mark email user as paid
+   */
+  markEmailAsPaid(email: string): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO email_analysis (email, isPaidUser, updatedAt) 
+      VALUES (?, TRUE, CURRENT_TIMESTAMP)
+      ON CONFLICT(email) DO UPDATE SET 
+        isPaidUser = TRUE,
+        updatedAt = CURRENT_TIMESTAMP
+    `);
+    
+    stmt.run(email);
+  }
+
+  /**
+   * OTP management methods
+   */
+  
+  /**
+   * Store OTP for email
+   */
+  storeOTP(email: string, otp: string): void {
+    // Remove expired OTPs first
+    const cleanupStmt = this.db.prepare('DELETE FROM otp_storage WHERE expiresAt < CURRENT_TIMESTAMP');
+    cleanupStmt.run();
+    
+    // Store new OTP with 15 minute expiration
+    const stmt = this.db.prepare(`
+      INSERT INTO otp_storage (email, otp, expiresAt) 
+      VALUES (?, ?, datetime('now', '+15 minutes'))
+    `);
+    
+    stmt.run(email, otp);
+  }
+
+  /**
+   * Verify OTP for email
+   */
+  verifyOTP(email: string, otp: string): boolean {
+    const stmt = this.db.prepare('SELECT * FROM otp_storage WHERE email = ? AND otp = ? AND expiresAt > CURRENT_TIMESTAMP');
+    const result = stmt.get(email, otp) as any;
+    
+    if (result) {
+      // Remove used OTP
+      const deleteStmt = this.db.prepare('DELETE FROM otp_storage WHERE email = ? AND otp = ?');
+      deleteStmt.run(email, otp);
+      return true;
+    }
+    
+    return false;
   }
 
   close() {
