@@ -37,7 +37,7 @@ const HomeContent = () => {
             <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-2xl p-8 border border-blue-200">
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                  💰 Simple, Transparent Pricing
+                  Simple, Transparent Pricing
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400">
                   Start free, then pay only for what you need
@@ -53,10 +53,10 @@ const HomeContent = () => {
                     </p>
                     <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
                       <p className="text-sm text-green-800 dark:text-green-200">
-                        ✅ Full ATS analysis<br/>
-                        ✅ Optimization tips<br/>
-                        ✅ No hidden fees<br/>
-                        ✅ Instant results
+                        Full ATS analysis<br/>
+                        Optimization tips<br/>
+                        No hidden fees<br/>
+                        Instant results
                       </p>
                     </div>
                   </div>
@@ -70,10 +70,10 @@ const HomeContent = () => {
                     </p>
                     <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-lg">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        💡 Multiple resumes<br/>
-                        💡 Job applications<br/>
-                        💡 Resume improvements<br/>
-                        💡 Career growth
+                        Multiple resumes<br/>
+                        Job applications<br/>
+                        Resume improvements<br/>
+                        Career growth
                       </p>
                     </div>
                   </div>
@@ -82,7 +82,7 @@ const HomeContent = () => {
               
               <div className="text-center mt-6">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  💡 <strong>Pro Tip:</strong> Make the most of your free analysis by uploading your best resume first!
+                  <strong>Pro Tip:</strong> Make the most of your free analysis by uploading your best resume first!
                 </p>
               </div>
             </div>
