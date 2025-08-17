@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { db } from '../lib/database';
+import { emailService } from '../lib/email-service';
 
 const router = Router();
 
@@ -339,14 +340,23 @@ router.post('/send-otp', async (req, res) => {
     // Store OTP in database with expiration (15 minutes)
     db.storeOTP(email, otp);
     
-    // TODO: Send OTP via email service (nodemailer, SendGrid, etc.)
-    // For now, log it to console for testing
-    console.log(`📧 OTP for ${email}: ${otp}`);
+    // Send OTP via email service
+    const emailSent = await emailService.sendOTP(email, otp);
     
-    res.json({
-      success: true,
-      message: 'OTP sent successfully'
-    });
+    if (emailSent) {
+      console.log(`📧 OTP email sent successfully to ${email}`);
+      res.json({
+        success: true,
+        message: 'OTP sent successfully to your email'
+      });
+    } else {
+      console.log(`📧 OTP email failed, OTP logged to console: ${otp}`);
+      res.json({
+        success: true,
+        message: 'OTP generated successfully (check console for testing)',
+        debug: process.env.NODE_ENV === 'development' ? { otp } : undefined
+      });
+    }
 
   } catch (error) {
     console.error('Send OTP error:', error);

@@ -17,6 +17,7 @@
   "dependencies": {
     "@types/better-sqlite3": "^7.6.13",
     "@types/multer": "^2.0.0",
+    "@types/nodemailer": "^7.0.0",
     "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",
     "docx": "^9.5.1",
@@ -24,6 +25,7 @@
     "express": "^5.1.0",
     "mammoth": "^1.10.0",
     "multer": "^2.0.2",
+    "nodemailer": "^7.0.5",
     "pdf-parse": "^1.1.1",
     "sqlite3": "^5.1.7",
     "zod": "^4.0.16"
