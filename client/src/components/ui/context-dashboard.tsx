@@ -150,8 +150,8 @@ const ContextDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+          <div className="flex items-center justify-between">
+            <div>
           <h1 className="text-3xl font-bold tracking-tight">Context Dashboard</h1>
           <p className="text-muted-foreground">
             Manage your resume analysis contexts and track progress
@@ -161,7 +161,7 @@ const ContextDashboard: React.FC = () => {
           <Lightbulb className="w-4 h-4 mr-2" />
           New Context
         </Button>
-      </div>
+        </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -239,9 +239,9 @@ const ContextDashboard: React.FC = () => {
                 onClick={() => setSelectedContext(context.id)}
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
+                <div className="flex items-start space-x-3">
                     <div className="mt-1">{getTypeIcon(context.type)}</div>
-                    <div className="flex-1">
+                  <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <h3 className="font-semibold">{context.title}</h3>
                         <Badge className={getStatusColor(context.status)}>

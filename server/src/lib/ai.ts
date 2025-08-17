@@ -596,12 +596,12 @@ IMPORTANT:
               }
             });
             
-            console.log('[ATS Score] AI analysis completed successfully');
+          console.log('[ATS Score] AI analysis completed successfully');
             console.log(`[ATS Score] Final score: ${result.score}`);
             console.log(`[ATS Score] Suggestions count: ${result.suggestions.length}`);
             console.log(`[ATS Score] Job profiles count: ${result.jobProfiles.length}`);
             
-            return result;
+          return result;
           } else {
             console.error('[ATS Score] Invalid result structure:', result);
             throw new Error('AI service returned invalid result structure. Please try again.');
@@ -712,12 +712,12 @@ IMPORTANT: Ensure the response is valid JSON without any control characters or f
           .trim();
         
         const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const result = JSON.parse(jsonMatch[0]);
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0]);
           
           // Validate the result structure
           if (result.improvedText && result.explanation !== undefined && result.newScore !== undefined) {
-            return result;
+        return result;
           }
         }
       } catch (parseError) {
@@ -936,16 +936,16 @@ function calculateFallbackATSScore(text: string) {
     
     if (hasMetrics && metricCount > 2) {
       breakdown.achievements = Math.min(40 + metricCount * 8, 100);
-    } else {
+  } else {
       breakdown.achievements = 30;
-      suggestions.push({
-        category: 'achievements',
+    suggestions.push({
+      category: 'achievements',
         issue: 'Limited quantified achievements',
         suggestion: 'Add specific metrics, percentages, and numbers to quantify your impact and results',
-        impact: 9
-      });
-    }
-    
+      impact: 9
+    });
+  }
+
     console.log(`[FallbackATS] Achievements: ${metricCount} metrics, score: ${breakdown.achievements}`);
   }
 
@@ -961,14 +961,14 @@ function calculateFallbackATSScore(text: string) {
     breakdown.experience = Math.min(50 + verbMatches * 4, 100);
     
     if (verbMatches < 4) {
-      suggestions.push({
-        category: 'experience',
-        issue: 'Weak action verbs',
-        suggestion: 'Start bullet points with strong action verbs like "Led", "Implemented", "Optimized"',
-        impact: 7
-      });
-    }
-    
+    suggestions.push({
+      category: 'experience',
+      issue: 'Weak action verbs',
+      suggestion: 'Start bullet points with strong action verbs like "Led", "Implemented", "Optimized"',
+      impact: 7
+    });
+  }
+
     console.log(`[FallbackATS] Experience: ${verbMatches} action verbs, score: ${breakdown.experience}`);
   }
 
