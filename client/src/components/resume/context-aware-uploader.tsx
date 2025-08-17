@@ -82,28 +82,30 @@ const ContextAwareUploader: React.FC = () => {
   // Check payment status before allowing analysis
   const checkPaymentStatus = async (): Promise<boolean> => {
     try {
-      // Check if user has already analyzed a resume (repeat user)
-      if (state.resumeData && state.resumeData.resumeId) {
-        // Generate device ID
-        const deviceId = getDeviceId();
-        
-        // Check payment status from server
-        const response = await apiService.checkPaymentStatus(deviceId);
-        
-        if (response.requiresPayment) {
-          // Show payment modal
-          setPaymentState({
-            showPaymentModal: true,
-            deviceId,
-            analysisCount: response.analysisCount || 1,
-            isRetryAttempt: response.isRetryAttempt || false,
-          });
-          return false; // Payment required
-        }
+      // Always check payment status for repeat users
+      const deviceId = getDeviceId();
+      console.log('🔍 Checking payment status for device:', deviceId);
+      
+      // Check payment status from server
+      const response = await apiService.checkPaymentStatus(deviceId);
+      console.log('📊 Payment status response:', response);
+      
+      if (response.requiresPayment) {
+        console.log('💰 Payment required - showing modal');
+        // Show payment modal
+        setPaymentState({
+          showPaymentModal: true,
+          deviceId,
+          analysisCount: response.analysisCount || 1,
+          isRetryAttempt: response.isRetryAttempt || false,
+        });
+        return false; // Payment required
       }
+      
+      console.log('✅ No payment required - proceeding with analysis');
       return true; // No payment required
     } catch (error) {
-      console.error('Payment status check failed:', error);
+      console.error('❌ Payment status check failed:', error);
       // Allow analysis to continue if payment check fails
       return true;
     }
@@ -329,9 +331,14 @@ const ContextAwareUploader: React.FC = () => {
 
   const handleFileUpload = async (file: File) => {
     try {
+      console.log('🚀 Starting file upload process...');
+      
       // Check payment status first for repeat users
       const canProceed = await checkPaymentStatus();
+      console.log('💳 Payment check result:', canProceed);
+      
       if (!canProceed) {
+        console.log('⏸️ Payment required - stopping upload process');
         // Payment modal is already shown by checkPaymentStatus
         return;
       }
