@@ -27,6 +27,7 @@ export interface ResumeAnalysisResponse {
   analysisCount?: number;
   analysisStatus?: 'partial' | 'complete';
   analysisNote?: string;
+  isRetryAttempt?: boolean;
 }
 
 export interface ChatResponse {
@@ -49,6 +50,7 @@ export interface PaymentStatusResponse {
   analysisCount?: number;
   deviceId?: string;
   error?: string;
+  isRetryAttempt?: boolean;
 }
 
 export interface ServerStatusResponse {

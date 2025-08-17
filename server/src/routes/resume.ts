@@ -159,6 +159,23 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
     const deviceId = `${userAgent.substring(0, 50)}_${clientIP}`.replace(/[^a-zA-Z0-9_-]/g, '_');
     
+    // Check if this is a retry attempt (AI failed previously)
+    const deviceStatus = db.getDeviceAnalysisStatus(deviceId);
+    const isRetryAttempt = deviceStatus?.analysisCount > 0 && !deviceStatus?.isPaidUser;
+    
+    // If this is a retry attempt and user hasn't paid, require payment
+    if (isRetryAttempt) {
+      return res.status(402).json({
+        success: false,
+        error: 'Payment required',
+        message: 'AI analysis failed on your first attempt. Please pay ₹49 for a retry with enhanced AI processing.',
+        requiresPayment: true,
+        deviceId: deviceId,
+        analysisCount: deviceStatus?.analysisCount || 1,
+        isRetryAttempt: true
+      });
+    }
+    
     const canPerformFreeAnalysis = db.canPerformFreeAnalysis(deviceId);
     
     if (!canPerformFreeAnalysis) {
@@ -259,6 +276,15 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         } catch (error) {
           console.error('❌ Full AI analysis failed:', error);
           // Keep fast analysis results, don't fail the request
+          
+          // Check if this is a significant AI failure that should require payment on retry
+          const isSignificantFailure = atsScore < 30 || !atsBreakdown || !atsSuggestions || atsSuggestions.length < 3;
+          
+          if (isSignificantFailure) {
+            console.log('⚠️ Significant AI failure detected - marking device for payment requirement on retry');
+            // Mark this as a failed attempt that will require payment on retry
+            db.incrementAnalysisCount(deviceId);
+          }
         }
       })();
       
@@ -520,6 +546,23 @@ router.post('/analyze', async (req, res) => {
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
     const deviceId = `${userAgent.substring(0, 50)}_${clientIP}`.replace(/[^a-zA-Z0-9_-]/g, '_');
     
+    // Check if this is a retry attempt (AI failed previously)
+    const deviceStatus = db.getDeviceAnalysisStatus(deviceId);
+    const isRetryAttempt = deviceStatus?.analysisCount > 0 && !deviceStatus?.isPaidUser;
+    
+    // If this is a retry attempt and user hasn't paid, require payment
+    if (isRetryAttempt) {
+      return res.status(402).json({
+        success: false,
+        error: 'Payment required',
+        message: 'AI analysis failed on your first attempt. Please pay ₹49 for a retry with enhanced AI processing.',
+        requiresPayment: true,
+        deviceId: deviceId,
+        analysisCount: deviceStatus?.analysisCount || 1,
+        isRetryAttempt: true
+      });
+    }
+    
     const canPerformFreeAnalysis = db.canPerformFreeAnalysis(deviceId);
     
     if (!canPerformFreeAnalysis) {
@@ -591,6 +634,16 @@ router.post('/analyze', async (req, res) => {
       console.log(`✅ AI analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Improved Lines: ${Object.keys(improvedContent).length}, Job Profiles: ${jobProfiles.length}`);
     } catch (aiError) {
       console.error('❌ AI analysis failed:', aiError);
+      
+      // Check if this is a significant AI failure that should require payment on retry
+      const isSignificantFailure = atsScore < 30 || !atsBreakdown || !atsSuggestions || atsSuggestions.length < 3;
+      
+      if (isSignificantFailure) {
+        console.log('⚠️ Significant AI failure detected in text analysis - marking device for payment requirement on retry');
+        // Mark this as a failed attempt that will require payment on retry
+        db.incrementAnalysisCount(deviceId);
+      }
+      
       // Don't use fallback - let the error propagate to ensure AI is always used
       throw new Error(`AI analysis failed: ${aiError instanceof Error ? aiError.message : 'Unknown error'}`);
     }

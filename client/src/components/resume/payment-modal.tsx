@@ -9,6 +9,7 @@ interface PaymentModalProps {
   onPaymentSuccess: () => void;
   deviceId: string;
   analysisCount: number;
+  isRetryAttempt?: boolean;
 }
 
 export function PaymentModal({
@@ -16,6 +17,7 @@ export function PaymentModal({
   onPaymentSuccess,
   deviceId,
   analysisCount,
+  isRetryAttempt,
 }: PaymentModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -145,11 +147,17 @@ export function PaymentModal({
             <div className="flex items-center space-x-2">
               <FiCheck className="h-5 w-5 text-blue-600" />
               <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                You&apos;ve used {analysisCount} analysis{analysisCount > 1 ? 'es' : ''}
+                {isRetryAttempt 
+                  ? `AI Analysis Failed - Retry Required`
+                  : `You've used ${analysisCount} analysis${analysisCount > 1 ? 'es' : ''}`
+                }
               </span>
             </div>
             <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-              Your first analysis was free. Additional analyses are ₹49 each.
+              {isRetryAttempt 
+                ? "Our AI couldn't generate a proper report on your first attempt. Pay ₹49 for enhanced AI processing and a complete analysis."
+                : "Your first analysis was free. Additional analyses are ₹49 each."
+              }
             </p>
           </div>
 

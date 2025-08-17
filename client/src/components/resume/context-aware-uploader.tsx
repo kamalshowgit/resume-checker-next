@@ -19,6 +19,7 @@ interface PaymentState {
   showPaymentModal: boolean;
   deviceId: string;
   analysisCount: number;
+  isRetryAttempt: boolean;
 }
 
 interface AnalysisState {
@@ -69,6 +70,7 @@ const ContextAwareUploader: React.FC = () => {
     showPaymentModal: false,
     deviceId: '',
     analysisCount: 0,
+    isRetryAttempt: false,
   });
 
   const [analysisState, setAnalysisState] = useState<AnalysisState>({
@@ -94,6 +96,7 @@ const ContextAwareUploader: React.FC = () => {
             showPaymentModal: true,
             deviceId,
             analysisCount: response.analysisCount || 1,
+            isRetryAttempt: response.isRetryAttempt || false,
           });
           return false; // Payment required
         }
@@ -402,6 +405,7 @@ const ContextAwareUploader: React.FC = () => {
           showPaymentModal: true,
           deviceId,
           analysisCount: response.analysisCount || 1,
+          isRetryAttempt: response.isRetryAttempt || false,
         });
         return;
       }
@@ -767,6 +771,7 @@ const ContextAwareUploader: React.FC = () => {
           onPaymentSuccess={handlePaymentSuccess}
           deviceId={paymentState.deviceId}
           analysisCount={paymentState.analysisCount}
+          isRetryAttempt={paymentState.isRetryAttempt}
         />
       )}
     </div>
