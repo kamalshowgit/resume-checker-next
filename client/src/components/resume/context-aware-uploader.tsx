@@ -4,18 +4,12 @@ import React, { useState, useCallback, useRef } from "react";
 import { FiUpload, FiFileText, FiCheckCircle, FiAlertCircle, FiInfo, FiTarget } from "react-icons/fi";
 import { useResumeContext } from "../../lib/context/resume-context";
 import { apiService } from "../../lib/services/api-service";
-import { AnalysisStatus } from "./analysis-status";
 
 interface UploadState {
   isUploading: boolean;
   progress: number;
   error: string | null;
   success: boolean;
-}
-
-interface AnalysisState {
-  status: 'partial' | 'complete';
-  note?: string;
 }
 
 const ContextAwareUploader: React.FC = () => {
@@ -29,16 +23,58 @@ const ContextAwareUploader: React.FC = () => {
 
   const [uploadSteps, setUploadSteps] = useState<{
     current: string;
-    steps: Array<{ id: string; name: string; status: 'pending' | 'active' | 'completed' | 'failed' }>;
+    steps: Array<{ 
+      id: string; 
+      name: string; 
+      status: 'pending' | 'active' | 'completed' | 'failed';
+      estimatedTime: number;
+      description: string;
+    }>;
   }>({
     current: 'idle',
     steps: [
-      { id: 'upload', name: 'File Upload', status: 'pending' },
-      { id: 'extraction', name: 'Text Extraction', status: 'pending' },
-      { id: 'fast-analysis', name: 'Fast Analysis', status: 'pending' },
-      { id: 'ai-analysis', name: 'AI Processing', status: 'pending' },
-      { id: 'content-improvement', name: 'Content Enhancement', status: 'pending' },
-      { id: 'final-report', name: 'Report Generation', status: 'pending' }
+      { 
+        id: 'upload', 
+        name: 'File Upload', 
+        status: 'pending',
+        estimatedTime: 2,
+        description: 'Uploading your resume file'
+      },
+      { 
+        id: 'extraction', 
+        name: 'Text Extraction', 
+        status: 'pending',
+        estimatedTime: 3,
+        description: 'Extracting text from document'
+      },
+      { 
+        id: 'fast-analysis', 
+        name: 'Quick Analysis', 
+        status: 'pending',
+        estimatedTime: 5,
+        description: 'Fast pattern-based scoring'
+      },
+      { 
+        id: 'ai-analysis', 
+        name: 'AI Processing', 
+        status: 'pending',
+        estimatedTime: 15,
+        description: 'AI-powered deep analysis'
+      },
+      { 
+        id: 'content-improvement', 
+        name: 'Content Enhancement', 
+        status: 'pending',
+        estimatedTime: 10,
+        description: 'AI content suggestions'
+      },
+      { 
+        id: 'final-report', 
+        name: 'Report Generation', 
+        status: 'pending',
+        estimatedTime: 3,
+        description: 'Compiling final report'
+      }
     ]
   });
 
@@ -58,10 +94,6 @@ const ContextAwareUploader: React.FC = () => {
 
   const [dragActive, setDragActive] = useState(false);
 
-  const [analysisState, setAnalysisState] = useState<AnalysisState>({
-    status: 'complete',
-    note: ''
-  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Generate context-aware upload guidance
@@ -299,12 +331,12 @@ const ContextAwareUploader: React.FC = () => {
       setUploadSteps({
         current: 'upload',
         steps: [
-          { id: 'upload', name: 'File Upload', status: 'active' },
-          { id: 'extraction', name: 'Text Extraction', status: 'pending' },
-          { id: 'fast-analysis', name: 'Fast Analysis', status: 'pending' },
-          { id: 'ai-analysis', name: 'AI Processing', status: 'pending' },
-          { id: 'content-improvement', name: 'Content Enhancement', status: 'pending' },
-          { id: 'final-report', name: 'Report Generation', status: 'pending' }
+          { id: 'upload', name: 'File Upload', status: 'active', estimatedTime: 2, description: 'Uploading your resume file' },
+          { id: 'extraction', name: 'Text Extraction', status: 'pending', estimatedTime: 3, description: 'Extracting text from document' },
+          { id: 'fast-analysis', name: 'Quick Analysis', status: 'pending', estimatedTime: 5, description: 'Fast pattern-based scoring' },
+          { id: 'ai-analysis', name: 'AI Processing', status: 'pending', estimatedTime: 15, description: 'AI-powered deep analysis' },
+          { id: 'content-improvement', name: 'Content Enhancement', status: 'pending', estimatedTime: 10, description: 'AI content suggestions' },
+          { id: 'final-report', name: 'Report Generation', status: 'pending', estimatedTime: 3, description: 'Compiling final report' }
         ]
       });
 
@@ -359,10 +391,10 @@ const ContextAwareUploader: React.FC = () => {
       setUploadState(prev => ({ ...prev, progress: 100, success: true }));
 
       // Update analysis status
-      setAnalysisState({
-        status: response.analysisStatus || 'complete',
-        note: response.analysisNote || ''
-      });
+      // setAnalysisState({
+      //   status: response.analysisStatus || 'complete',
+      //   note: response.analysisNote || ''
+      // });
 
       // Update context with new resume data
       if (response.success) {
@@ -579,35 +611,54 @@ const ContextAwareUploader: React.FC = () => {
               </div>
             </div>
 
-            {/* Upload Steps */}
-            <div className="mobile-space-y-sm">
-              {uploadSteps.steps.map((step) => (
-                <div key={step.id} className="flex items-center space-x-3">
-                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
+            {/* Enhanced Progress Steps */}
+            <div className="space-y-4">
+              {uploadSteps.steps.map((step, index) => (
+                <div key={step.id} className="flex items-start space-x-3">
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                     step.status === 'completed' 
                       ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' 
                       : step.status === 'active'
                       ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 animate-pulse'
+                      : step.status === 'failed'
+                      ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                       : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
                   }`}>
                     {step.status === 'completed' ? (
-                      <FiCheckCircle className="h-3 w-3" />
+                      <FiCheckCircle className="h-4 w-4" />
                     ) : step.status === 'active' ? (
-                      <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-ping" />
+                      <div className="w-3 h-3 bg-blue-600 dark:bg-blue-400 rounded-full animate-ping" />
+                    ) : step.status === 'failed' ? (
+                      <FiAlertCircle className="h-4 w-4" />
                     ) : (
-                      <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full" />
+                      <div className="w-3 h-3 bg-gray-400 dark:bg-gray-500 rounded-full" />
                     )}
                   </div>
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${
-                      step.status === 'completed' 
-                        ? 'text-green-700 dark:text-green-300' 
-                        : step.status === 'active'
-                        ? 'text-blue-700 dark:text-blue-300'
-                        : 'text-gray-500 dark:text-gray-400'
-                    }`}>
-                      {step.name}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className={`text-sm font-medium ${
+                        step.status === 'completed' 
+                          ? 'text-green-700 dark:text-green-300' 
+                          : step.status === 'active'
+                          ? 'text-blue-700 dark:text-blue-300'
+                          : step.status === 'failed'
+                          ? 'text-red-700 dark:text-red-300'
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {step.name}
+                      </p>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        ~{step.estimatedTime}s
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {step.description}
                     </p>
+                    {step.status === 'active' && (
+                      <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                        <div className="bg-blue-600 dark:bg-blue-400 h-1 rounded-full transition-all duration-1000 animate-pulse" style={{ width: '60%' }} />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -678,13 +729,6 @@ const ContextAwareUploader: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Analysis Status */}
-      <AnalysisStatus 
-        status={analysisState.status}
-        note={analysisState.note}
-        onRefresh={() => window.location.reload()}
-      />
     </div>
   );
 };

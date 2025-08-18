@@ -57,7 +57,7 @@ class APIService {
     
     this.api = axios.create({
       baseURL: this.baseURL,
-      timeout: 30000,
+      timeout: 45000, // Reduced from 60s to 45s for better UX
       headers: {
         'Content-Type': 'application/json',
       },
@@ -136,7 +136,7 @@ class APIService {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
-            timeout: 60000, // Increase timeout for file uploads
+            timeout: 45000, // Reduced from 60s to 45s for better UX
           }
         );
         

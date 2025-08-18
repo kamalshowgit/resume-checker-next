@@ -3,12 +3,9 @@
 import { SEO } from '@/components/ui/seo';
 import ContextAwareUploader from '@/components/resume/context-aware-uploader';
 import ContextAwareChatbot from '@/components/resume/context-aware-chatbot';
-import { ResumeAnalysis } from '@/components/resume/resume-analysis';
-import { useResumeContext, ResumeProvider } from '@/lib/context/resume-context';
+import { ResumeProvider } from '@/lib/context/resume-context';
 
 const HomeContent = () => {
-  const { state } = useResumeContext();
-
   return (
     <>
       <SEO
