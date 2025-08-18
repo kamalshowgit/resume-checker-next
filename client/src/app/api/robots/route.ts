@@ -12,7 +12,6 @@ Sitemap: ${baseUrl}/sitemap.xml
 # Disallow admin and API routes
 Disallow: /admin
 Disallow: /api/admin
-Disallow: /api/payment
 Disallow: /api/chat
 
 # Allow public routes

@@ -102,7 +102,6 @@ export const FEATURE_FLAGS = {
   ENABLE_BACKGROUND_AI: true,
   ENABLE_CONTENT_IMPROVEMENT: true,
   ENABLE_DEVICE_TRACKING: true,
-  ENABLE_PAYMENT_SYSTEM: true,
 };
 
 // Environment detection
