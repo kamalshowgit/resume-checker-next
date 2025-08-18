@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Footer } from "@/components/ui/footer";
+import { SEO } from "@/components/ui/seo";
 import { FiTarget, FiUsers, FiAward, FiTrendingUp, FiShield, FiZap } from "react-icons/fi";
 import Head from "next/head";
 
@@ -179,8 +179,8 @@ export default function AboutPage() {
                   <div className="text-gray-600 dark:text-gray-400">Industries Served</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-600 mb-2">₹49</div>
-                  <div className="text-gray-600 dark:text-gray-400">Per Analysis</div>
+                  <div className="text-3xl font-bold text-orange-600 mb-2">∞</div>
+                  <div className="text-gray-600 dark:text-gray-400">Free Analyses</div>
                 </div>
               </div>
             </div>
@@ -192,18 +192,18 @@ export default function AboutPage() {
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl text-center">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                Simple, Transparent Pricing
+                Completely Free Forever! 🎉
               </h2>
-              <div className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 p-8 rounded-2xl">
-                <div className="text-4xl font-bold text-blue-600 mb-4">First Analysis: FREE</div>
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 p-8 rounded-2xl">
+                <div className="text-4xl font-bold text-green-600 mb-4">Unlimited Analysis: FREE</div>
                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-                  Start your journey with a completely free resume analysis. No credit card required.
+                  ResumeCheck is now completely free with unlimited resume analysis. No credit card required, no limits.
                 </p>
                 <div className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Additional Analyses: ₹49 each
+                  Everything Included: ATS Scoring, AI Suggestions, Job Matching
                 </div>
                 <p className="text-gray-600 dark:text-gray-400">
-                  After your free analysis, each new resume analysis costs just ₹49. Perfect for job seekers applying to multiple positions or wanting to improve their resume.
+                  Get unlimited AI-powered resume analysis, section-by-section scoring, improvement suggestions, and job profile matching - all completely free!
                 </p>
               </div>
             </div>
@@ -262,8 +262,6 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        <Footer />
       </main>
     </>
   );

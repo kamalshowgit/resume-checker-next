@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Footer } from "@/components/ui/footer";
 import { SEO } from "@/components/ui/seo";
 import { FiMail, FiPhone, FiMapPin, FiClock, FiMessageCircle } from "react-icons/fi";
 
@@ -127,46 +126,24 @@ export default function ContactPage() {
           </div>
         </section>
 
-        {/* Pricing Information */}
-        <section className="py-16 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20">
+        {/* Pricing Section */}
+        <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl text-center">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-                💰 Simple, Transparent Pricing
+                Completely Free Forever! 🎉
               </h2>
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-blue-200">
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-green-600 mb-4">First Analysis: FREE</div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      Start with a completely free resume analysis. No credit card required.
-                    </p>
-                    <div className="bg-green-100 dark:bg-green-900/20 p-3 rounded-lg">
-                      <p className="text-sm text-green-800 dark:text-green-200">
-                        ✅ Full ATS analysis<br/>
-                        ✅ Optimization tips<br/>
-                        ✅ No hidden fees
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-600 mb-4">₹49 per Analysis</div>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      After your free analysis, each new resume analysis costs just ₹49.
-                    </p>
-                    <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-lg">
-                      <p className="text-sm text-blue-800 dark:text-blue-200">
-                        💡 Perfect for multiple resumes<br/>
-                        💡 Job seekers applying widely<br/>
-                        💡 Resume improvements
-                      </p>
-                    </div>
-                  </div>
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 p-8 rounded-2xl">
+                <div className="text-4xl font-bold text-green-600 mb-4">Unlimited Analysis: FREE</div>
+                <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                  ResumeCheck is now completely free with unlimited resume analysis. No credit card required, no limits.
+                </p>
+                <div className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Everything Included: ATS Scoring, AI Suggestions, Job Matching
                 </div>
-                <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                  💡 <strong>Pro Tip:</strong> Make the most of your free analysis by uploading your best resume first!
-                </div>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Get unlimited AI-powered resume analysis, section-by-section scoring, improvement suggestions, and job profile matching - all completely free!
+                </p>
               </div>
             </div>
           </div>
@@ -236,18 +213,16 @@ export default function ContactPage() {
                       Subject *
                     </label>
                     <select
-                      id="subject"
                       name="subject"
                       required
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                     >
                       <option value="">Select a subject</option>
-                      <option value="technical-support">Technical Support</option>
-                      <option value="resume-analysis">Resume Analysis Help</option>
-                      <option value="account-issues">Account Issues</option>
-                      <option value="billing">Billing & Payments</option>
-                      <option value="feature-request">Feature Request</option>
                       <option value="general">General Inquiry</option>
+                      <option value="technical">Technical Support</option>
+                      <option value="feature">Feature Request</option>
+                      <option value="feedback">Feedback</option>
+                      <option value="partnership">Partnership</option>
                     </select>
                   </div>
                   
@@ -327,7 +302,6 @@ export default function ContactPage() {
           </div>
         </section>
 
-        <Footer />
       </main>
     </>
   );

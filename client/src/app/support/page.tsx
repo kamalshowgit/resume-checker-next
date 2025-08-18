@@ -41,8 +41,10 @@ export default function SupportPage() {
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• File upload problems</li>
                     <li>• Analysis errors</li>
-                    <li>• Payment questions</li>
-                    <li>• Account access</li>
+                    <li>• Technical issues</li>
+                    <li>• Feature requests</li>
+                    <li>• General questions</li>
+                    <li>• Resume analysis help</li>
                   </ul>
                 </div>
               </div>
@@ -109,35 +111,17 @@ export default function SupportPage() {
                 Troubleshooting
               </h2>
               <div className="space-y-4">
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <h3 className="font-semibold text-gray-800 mb-3">
-                    File Upload Issues
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    Resume Analysis Issues
                   </h3>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      <strong>Problem:</strong> Can&apos;t upload your resume?
-                    </p>
-                    <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                      <li>• Check file size (max 10MB)</li>
-                      <li>• Use supported formats: PDF, DOC, DOCX, TXT</li>
+                  <div className="space-y-3">
+                    <strong>Problem:</strong> Analysis not working?
+                    <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1 ml-4">
+                      <li>• Check file format (PDF, DOC, DOCX, TXT)</li>
+                      <li>• Ensure file size is under 10MB</li>
                       <li>• Try refreshing the page</li>
-                      <li>• Clear browser cache</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <h3 className="font-semibold text-gray-800 mb-3">
-                    Analysis Errors
-                  </h3>
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-600">
-                      <strong>Problem:</strong> Analysis not working?
-                    </p>
-                    <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                      <li>• Check your internet connection</li>
-                      <li>• Wait a few minutes and try again</li>
-                      <li>• Contact support if persistent</li>
+                      <li>• Contact support if issue persists</li>
                     </ul>
                   </div>
                 </div>
@@ -262,21 +246,24 @@ export default function SupportPage() {
             </section>
 
             {/* Pricing Information */}
-            <section className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 border border-blue-200">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                💰 Pricing Information
-              </h2>
-              <div className="bg-white rounded-lg p-6 border border-blue-200">
-                <div className="text-center mb-4">
-                  <div className="text-3xl font-bold text-green-600 mb-2">First Analysis: FREE</div>
-                  <p className="text-gray-600 mb-4">Start with a completely free resume analysis. No credit card required.</p>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-semibold text-blue-600 mb-2">Additional Analyses: ₹49 each</div>
-                  <p className="text-gray-600">After your free analysis, each new resume analysis costs just ₹49. Perfect for job seekers applying to multiple positions.</p>
-                </div>
-                <div className="mt-4 text-center text-sm text-gray-500">
-                  💡 <strong>Tip:</strong> Make the most of your free analysis by uploading your best resume first!
+            <section className="py-16">
+              <div className="container mx-auto px-4">
+                <div className="mx-auto max-w-4xl text-center">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+                    Completely Free Forever! 🎉
+                  </h2>
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 p-8 rounded-2xl">
+                    <div className="text-4xl font-bold text-green-600 mb-4">Unlimited Analysis: FREE</div>
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+                      ResumeCheck is now completely free with unlimited resume analysis. No credit card required, no limits.
+                    </p>
+                    <div className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+                      Everything Included: ATS Scoring, AI Suggestions, Job Matching
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Get unlimited AI-powered resume analysis, section-by-section scoring, improvement suggestions, and job profile matching - all completely free!
+                    </p>
+                  </div>
                 </div>
               </div>
             </section>

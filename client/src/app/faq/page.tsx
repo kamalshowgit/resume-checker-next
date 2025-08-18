@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Footer } from "@/components/ui/footer";
 import { SEO } from "@/components/ui/seo";
 import { FiChevronDown, FiChevronUp, FiSearch, FiHelpCircle } from "react-icons/fi";
 
@@ -9,78 +8,30 @@ export default function FAQPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedItems, setExpandedItems] = useState<number[]>([]);
 
-  const faqCategories = [
+  const faqs = [
     {
-      title: "Getting Started",
-      icon: FiHelpCircle,
-      questions: [
-        {
-          question: "How does ResumeCheck work?",
-          answer: "ResumeCheck uses advanced AI technology to analyze your resume. Simply upload your resume file (PDF, Word, or text), and our system will provide detailed analysis including ATS scoring, section-by-section feedback, and specific improvement suggestions."
-        },
-        {
-          question: "What file formats are supported?",
-          answer: "We support PDF, Microsoft Word (.doc, .docx), and plain text files. PDF is recommended for best results as it preserves formatting and is most compatible with our analysis system."
-        },
-        {
-          question: "Is my resume data secure?",
-          answer: "Yes, your privacy and data security are our top priorities. All resume uploads are encrypted, processed securely, and automatically deleted after analysis. We never share your personal information with third parties."
-        }
-      ]
+      question: "How does ResumeCheck work?",
+      answer: "Simply upload your resume (PDF, Word, or text) and our AI will analyze it for ATS compatibility, provide section-by-section scoring, and give personalized improvement suggestions. It's completely free with no limits!"
     },
     {
-      title: "Resume Analysis",
-      icon: FiHelpCircle,
-      questions: [
-        {
-          question: "What is ATS scoring?",
-          answer: "ATS (Applicant Tracking System) scoring measures how well your resume will perform when scanned by automated hiring systems. Our AI analyzes keyword matching, formatting, and content structure to give you a score and specific recommendations for improvement."
-        },
-        {
-          question: "How accurate is the AI analysis?",
-          answer: "Our AI analysis is trained on millions of successful resumes and industry best practices. It provides highly accurate feedback on content, structure, and optimization. However, we always recommend reviewing suggestions and applying them based on your specific situation."
-        },
-        {
-          question: "Can I get feedback on specific sections?",
-          answer: "Yes! Our analysis breaks down your resume into key sections (summary, experience, skills, education, etc.) and provides individual scores and specific improvement suggestions for each section."
-        }
-      ]
+      question: "What file formats are supported?",
+      answer: "We support PDF, DOC, DOCX, TXT, and RTF files. For best results, we recommend using PDF format as it maintains formatting consistency across different devices and platforms."
     },
     {
-      title: "Account & Billing",
-      icon: FiHelpCircle,
-      questions: [
-        {
-          question: "Do I need to create an account?",
-          answer: "You can use our basic resume analysis without creating an account. However, creating a free account allows you to save your analysis history, track improvements over time, and access additional features."
-        },
-        {
-          question: "What payment methods do you accept?",
-          answer: "We accept all major credit cards, PayPal, and Apple Pay. All payments are processed securely through Stripe, and we offer a 30-day money-back guarantee."
-        },
-        {
-          question: "Can I cancel my subscription anytime?",
-          answer: "Yes, you can cancel your subscription at any time through your account settings. You'll continue to have access to your plan until the end of your billing period."
-        }
-      ]
+      question: "How accurate is the ATS scoring?",
+      answer: "Our AI-powered scoring system analyzes resumes based on industry standards and ATS requirements. We provide detailed breakdowns for different sections to help you understand exactly where improvements are needed."
     },
     {
-      title: "Technical Support",
-      icon: FiHelpCircle,
-      questions: [
-        {
-          question: "What if the analysis doesn't work?",
-          answer: "If you encounter any issues with the analysis, please check that your file is in a supported format and under 10MB. If problems persist, contact our support team and we'll help you resolve the issue."
-        },
-        {
-          question: "How long does analysis take?",
-          answer: "Most resume analyses are completed within 30 seconds to 2 minutes. Processing time depends on the file size and complexity of your resume content."
-        },
-        {
-          question: "Can I use ResumeCheck on mobile?",
-          answer: "Yes! ResumeCheck is fully responsive and works great on all devices including smartphones and tablets. You can upload resumes and view analysis results on any device."
-        }
-      ]
+      question: "Can I analyze multiple resumes?",
+      answer: "Yes! ResumeCheck is completely free with unlimited resume analysis. You can analyze as many resumes as you want, whenever you want, with no restrictions or limits."
+    },
+    {
+      question: "Do I need to create an account?",
+      answer: "No account required! Just upload your resume and get instant analysis. Your data is processed securely and privately."
+    },
+    {
+      question: "What sections does ResumeCheck analyze?",
+      answer: "We analyze all major resume sections including summary, work experience, skills, education, achievements, contact information, and more. Each section gets a detailed score and improvement suggestions."
     }
   ];
 
@@ -92,27 +43,23 @@ export default function FAQPage() {
     );
   };
 
-  const filteredCategories = faqCategories.map(category => ({
-    ...category,
-    questions: category.questions.filter(q =>
-      q.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.answer.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })).filter(category => category.questions.length > 0);
+  const filteredFaqs = faqs.map((faq, index) => ({
+    ...faq,
+    question: faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ? faq.question : "",
+    answer: faq.answer.toLowerCase().includes(searchTerm.toLowerCase()) ? faq.answer : ""
+  })).filter(faq => faq.question !== "");
 
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "mainEntity": faqCategories.flatMap(category =>
-      category.questions.map(q => ({
-        "@type": "Question",
-        "name": q.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": q.answer
-        }
-      }))
-    )
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
   };
 
   return (
@@ -223,54 +170,40 @@ export default function FAQPage() {
                 </div>
               </div>
 
-              {filteredCategories.map((category, categoryIndex) => (
-                <div key={categoryIndex} className="mb-12">
-                  <div className="flex items-center gap-3 mb-6">
-                    <category.icon className="h-6 w-6 text-blue-600" />
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {category.title}
-                    </h2>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {category.questions.map((item, questionIndex) => {
-                      const globalIndex = categoryIndex * 100 + questionIndex;
-                      const isExpanded = expandedItems.includes(globalIndex);
+              {filteredFaqs.map((faq, index) => {
+                const globalIndex = index;
+                const isExpanded = expandedItems.includes(globalIndex);
+                
+                return (
+                  <div key={index} className="mb-12">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                      <button
+                        onClick={() => toggleItem(globalIndex)}
+                        className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <span className="font-semibold text-gray-900 dark:text-white pr-4">
+                          {faq.question}
+                        </span>
+                        {isExpanded ? (
+                          <FiChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                        ) : (
+                          <FiChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                        )}
+                      </button>
                       
-                      return (
-                        <div
-                          key={questionIndex}
-                          className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
-                        >
-                          <button
-                            onClick={() => toggleItem(globalIndex)}
-                            className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                          >
-                            <span className="font-semibold text-gray-900 dark:text-white pr-4">
-                              {item.question}
-                            </span>
-                            {isExpanded ? (
-                              <FiChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                            ) : (
-                              <FiChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                            )}
-                          </button>
-                          
-                          {isExpanded && (
-                            <div className="px-6 pb-4">
-                              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                                {item.answer}
-                              </p>
-                            </div>
-                          )}
+                      {isExpanded && (
+                        <div className="px-6 pb-4">
+                          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {faq.answer}
+                          </p>
                         </div>
-                      );
-                    })}
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               
-              {searchTerm && filteredCategories.length === 0 && (
+              {searchTerm && filteredFaqs.length === 0 && (
                 <div className="text-center py-12">
                   <FiHelpCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -312,8 +245,6 @@ export default function FAQPage() {
             </div>
           </div>
         </section>
-
-        <Footer />
       </main>
     </>
   );
