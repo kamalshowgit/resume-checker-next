@@ -455,6 +455,15 @@ const ContextAwareUploader: React.FC = () => {
         // Show success message briefly
         setTimeout(() => {
           setUploadState(prev => ({ ...prev, success: false }));
+          
+          // Smooth scroll to analysis results
+          const analysisSection = document.querySelector('[data-analysis-section]');
+          if (analysisSection) {
+            analysisSection.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start' 
+            });
+          }
         }, 3000);
       }
     } catch (error) {
@@ -544,10 +553,20 @@ const ContextAwareUploader: React.FC = () => {
             <FiCheckCircle className="mx-auto h-16 w-16 text-green-500" />
             <div>
               <p className="mobile-text-lg font-medium text-green-900 dark:text-green-100">
-                Resume uploaded successfully!
+                Analysis Complete! 🎉
               </p>
-              <p className="mobile-text-base text-green-600 dark:text-green-400">
-                Your resume is being analyzed
+              {state.resumeData?.atsScore && (
+                <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <p className="text-sm font-semibold text-green-800 dark:text-green-200">
+                    Your ATS Score: <span className="text-lg">{state.resumeData.atsScore}/100</span>
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    Scroll down to see detailed analysis and recommendations
+                  </p>
+                </div>
+              )}
+              <p className="mobile-text-base text-green-600 dark:text-green-400 mt-2">
+                Your resume has been analyzed successfully
               </p>
             </div>
           </div>

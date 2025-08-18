@@ -3,9 +3,12 @@
 import { SEO } from '@/components/ui/seo';
 import ContextAwareUploader from '@/components/resume/context-aware-uploader';
 import ContextAwareChatbot from '@/components/resume/context-aware-chatbot';
-import { ResumeProvider } from '@/lib/context/resume-context';
+import { ResumeAnalysis } from '@/components/resume/resume-analysis';
+import { ResumeProvider, useResumeContext } from '@/lib/context/resume-context';
 
 const HomeContent = () => {
+  const { state } = useResumeContext();
+
   return (
     <>
       <SEO
@@ -35,35 +38,50 @@ const HomeContent = () => {
               <div className="mobile-grid mobile-grid-cols-1 lg:mobile-grid-cols-2 mobile-gap-12 items-center">
                 {/* Left Column - Resume Upload */}
                 <div className="mobile-space-y-6">
-                  <h2 className="mobile-text-3xl sm:mobile-text-4xl font-bold text-gray-900">
+                  <h2 className="mobile-text-3xl sm:mobile-text-4xl font-bold text-gray-900 dark:text-white">
                     Upload Your Resume for AI-Powered Analysis
                   </h2>
-                  <p className="mobile-text-lg text-gray-600">
+                  <p className="mobile-text-lg text-gray-600 dark:text-gray-400">
                     Get instant feedback on your resume's ATS compatibility, section scores, and AI-powered suggestions for improvement.
                   </p>
                   <div className="mobile-space-y-4">
                     <div className="flex items-start mobile-space-x-3">
                       <span className="text-green-500 mobile-text-xl">✅</span>
-                      <span className="text-gray-700">ATS Score & Section Breakdown</span>
+                      <span className="text-gray-700 dark:text-gray-300">ATS Score & Section Breakdown</span>
                     </div>
                     <div className="flex items-start mobile-space-x-3">
                       <span className="text-green-500 mobile-text-xl">✅</span>
-                      <span className="text-gray-700">AI-Powered Content Suggestions</span>
+                      <span className="text-gray-700 dark:text-gray-300">AI-Powered Content Suggestions</span>
                     </div>
                     <div className="flex items-start mobile-space-x-3">
                       <span className="text-green-500 mobile-text-xl">✅</span>
-                      <span className="text-gray-700">Instant Results & Professional Insights</span>
+                      <span className="text-gray-700 dark:text-gray-300">Instant Results & Professional Insights</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right Column - Resume Uploader Component */}
-                <div className="bg-white rounded-2xl shadow-lg mobile-p-6">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg mobile-p-6">
                   <ContextAwareUploader />
                 </div>
               </div>
             </div>
           </section>
+
+          {/* Resume Analysis Results - Display immediately after analysis */}
+          {state.resumeData && (
+            <section className="mobile-py-16" data-analysis-section>
+              <div className="mobile-container">
+                <ResumeAnalysis 
+                  analysisResults={state.resumeData.analysis}
+                  resumeText={state.resumeData.text}
+                  onContentUpdate={() => {}}
+                  analysisStatus="complete"
+                  analysisNote="Analysis completed successfully"
+                />
+              </div>
+            </section>
+          )}
 
           {/* AI Career Advisor - Always visible */}
           <div id="chatbot">
