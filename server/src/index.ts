@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import resumeRouter from './routes/resume';
-import payRouter from './routes/pay';
 import adminRouter from './routes/admin';
 import { logAIConfiguration } from './lib/ai';
 
@@ -17,6 +16,7 @@ console.log('ENABLE_ATS_SCORING:', process.env.ENABLE_ATS_SCORING);
 console.log('ENABLE_CONTENT_IMPROVEMENT:', process.env.ENABLE_CONTENT_IMPROVEMENT);
 console.log('ENABLE_CHAT_ASSISTANT:', process.env.ENABLE_CHAT_ASSISTANT);
 console.log('ENABLE_JOB_SEARCH:', process.env.ENABLE_JOB_SEARCH);
+console.log('GMAIL_APP_PASSWORD:', process.env.GMAIL_APP_PASSWORD ? '***SET***' : 'NOT SET');
 console.log('===================================');
 
 // CORS configuration with multiple origins support
@@ -52,7 +52,6 @@ app.use(urlencoded({ extended: true }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/resume', resumeRouter);
-app.use('/api/pay', payRouter);
 app.use('/api/admin', adminRouter);
 
 const port = Number(process.env.PORT || 4000);

@@ -4,8 +4,6 @@ import React, { useState, useCallback, useRef } from "react";
 import { FiUpload, FiFileText, FiCheckCircle, FiAlertCircle, FiInfo, FiTarget } from "react-icons/fi";
 import { useResumeContext } from "../../lib/context/resume-context";
 import { apiService } from "../../lib/services/api-service";
-import { PaymentModal } from "./payment-modal";
-import { EmailVerificationModal } from "../ui/email-verification-modal";
 import { AnalysisStatus } from "./analysis-status";
 
 interface UploadState {
@@ -13,13 +11,6 @@ interface UploadState {
   progress: number;
   error: string | null;
   success: boolean;
-}
-
-interface PaymentState {
-  showPaymentModal: boolean;
-  email: string;
-  analysisCount: number;
-  isRetryAttempt: boolean;
 }
 
 interface AnalysisState {
@@ -66,58 +57,12 @@ const ContextAwareUploader: React.FC = () => {
   };
 
   const [dragActive, setDragActive] = useState(false);
-  const [paymentState, setPaymentState] = useState<PaymentState>({
-    showPaymentModal: false,
-    email: '',
-    analysisCount: 0,
-    isRetryAttempt: false,
-  });
-
-  const [showEmailVerification, setShowEmailVerification] = useState(false);
-  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
 
   const [analysisState, setAnalysisState] = useState<AnalysisState>({
     status: 'complete',
     note: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Check payment status before allowing analysis
-  const checkPaymentStatus = async (): Promise<boolean> => {
-    try {
-      // If no email is verified, show email verification first
-      if (!verifiedEmail) {
-        console.log('📧 No email verified - showing email verification');
-        setShowEmailVerification(true);
-        return false;
-      }
-
-      console.log('🔍 Checking payment status for email:', verifiedEmail);
-      
-      // Check payment status from server using email
-      const response = await apiService.checkEmailStatus(verifiedEmail);
-      console.log('📊 Payment status response:', response);
-      
-      if (response.requiresPayment) {
-        console.log('💰 Payment required - showing modal');
-        // Show payment modal with clear information
-        setPaymentState({
-          showPaymentModal: true,
-          email: verifiedEmail,
-          analysisCount: response.analysisCount || 1,
-          isRetryAttempt: false,
-        });
-        return false; // Payment required
-      }
-      
-      console.log('✅ No payment required - proceeding with analysis');
-      return true; // No payment required
-    } catch (error) {
-      console.error('❌ Payment status check failed:', error);
-      // Allow analysis to continue if payment check fails
-      return true;
-    }
-  };
 
   // Generate context-aware upload guidance
   const getUploadGuidance = () => {
@@ -337,21 +282,11 @@ const ContextAwareUploader: React.FC = () => {
     }
   };
 
-  // Handle file upload with improved payment flow
+  // Handle file upload without payment checks
   const handleFileUpload = async (file: File) => {
     try {
       console.log('🚀 Starting file upload process...');
       
-      // Check payment status first for repeat users
-      const canProceed = await checkPaymentStatus();
-      console.log('💳 Payment check result:', canProceed);
-      
-      if (!canProceed) {
-        console.log('⏸️ Payment required - stopping upload process');
-        // Payment modal is already shown by checkPaymentStatus
-        return;
-      }
-
       // Reset states
       setUploadState({
         isUploading: true,
@@ -408,21 +343,6 @@ const ContextAwareUploader: React.FC = () => {
 
       // Clear progress interval
       clearInterval(progressInterval);
-
-      // Check if payment is required after analysis
-      if (response.error === 'Payment required' && response.requiresPayment) {
-        clearInterval(progressInterval);
-        setUploadState(prev => ({ ...prev, isUploading: false, progress: 0 }));
-        
-        // Show payment modal with clear information about why payment is needed
-        setPaymentState({
-          showPaymentModal: true,
-          email: verifiedEmail || '',
-          analysisCount: response.analysisCount || 1,
-          isRetryAttempt: response.isRetryAttempt || false,
-        });
-        return;
-      }
 
       // Step 5: Content Improvement
       updateUploadStep('ai-analysis', 'completed');
@@ -524,18 +444,6 @@ const ContextAwareUploader: React.FC = () => {
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
-  };
-
-  const handlePaymentSuccess = () => {
-    setPaymentState(prev => ({ ...prev, showPaymentModal: false }));
-    // Retry the upload after successful payment
-    if (fileInputRef.current?.files?.[0]) {
-      handleFileUpload(fileInputRef.current.files[0]);
-    }
-  };
-
-  const handlePaymentClose = () => {
-    setPaymentState(prev => ({ ...prev, showPaymentModal: false }));
   };
 
   const guidance = getUploadGuidance();
@@ -776,35 +684,6 @@ const ContextAwareUploader: React.FC = () => {
         status={analysisState.status}
         note={analysisState.note}
         onRefresh={() => window.location.reload()}
-      />
-
-      {/* Payment Modal */}
-      {paymentState.showPaymentModal && (
-        <PaymentModal
-          onClose={handlePaymentClose}
-          onPaymentSuccess={handlePaymentSuccess}
-          email={paymentState.email}
-          analysisCount={paymentState.analysisCount}
-          isRetryAttempt={paymentState.isRetryAttempt}
-        />
-      )}
-
-      {/* Email Verification Modal */}
-      <EmailVerificationModal
-        isOpen={showEmailVerification}
-        onClose={() => setShowEmailVerification(false)}
-        onEmailVerified={(email, isFirstTime) => {
-          setVerifiedEmail(email);
-          setShowEmailVerification(false);
-          if (isFirstTime) {
-            // First time user, proceed with analysis
-            console.log('✅ First time user - proceeding with analysis');
-          } else {
-            // Repeat user, check payment status
-            console.log('💰 Repeat user - checking payment status');
-            checkPaymentStatus();
-          }
-        }}
       />
     </div>
   );

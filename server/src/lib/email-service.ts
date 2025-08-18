@@ -30,10 +30,7 @@ class EmailService {
     // Check if email service is properly configured
     this.isConfigured = !!(process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASSWORD);
     
-    if (!this.isConfigured) {
-      console.warn('⚠️  Email service not configured. Please set GMAIL_APP_PASSWORD environment variable.');
-      console.warn('📧 Support email will be used as fallback: rsmchckrspprt@gmail.com');
-    } else {
+    if (this.isConfigured) {
       console.log('✅ Email service configured successfully with support email');
     }
   }
@@ -41,7 +38,10 @@ class EmailService {
   // Send OTP email
   async sendOTP(email: string, otp: string): Promise<boolean> {
     try {
-      if (!this.isConfigured) {
+      // Check configuration at runtime
+      const isConfigured = !!(process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASSWORD);
+      
+      if (!isConfigured) {
         console.warn('📧 Email service not configured, OTP will only be logged to console');
         console.log(`📧 OTP for ${email}: ${otp}`);
         return false;
