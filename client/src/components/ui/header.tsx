@@ -25,12 +25,12 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200/60 dark:border-gray-800/60 shadow-sm dark:shadow-gray-900/20">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo and Brand */}
         <div className="flex items-center space-x-3">
           <Logo />
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
+          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
             ResumeCheck
           </Link>
         </div>
@@ -39,19 +39,19 @@ export function Header() {
         <nav className="hidden md:flex items-center space-x-6">
           <Link
             href="/about"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="text-sm font-medium text-gray-600 dark:text-gray-300 transition-all duration-200 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-800/80 hover:shadow-sm dark:hover:shadow-gray-900/20"
           >
             About
           </Link>
           <Link
             href="/pricing"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="text-sm font-medium text-gray-600 dark:text-gray-300 transition-all duration-200 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-800/80 hover:shadow-sm dark:hover:shadow-gray-900/20"
           >
             Pricing
           </Link>
           <Link
             href="/faq"
-            className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="text-sm font-medium text-gray-600 dark:text-gray-300 transition-all duration-200 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-lg hover:bg-gray-100/80 dark:hover:bg-gray-800/80 hover:shadow-sm dark:hover:shadow-gray-900/20"
           >
             FAQ
           </Link>
@@ -65,7 +65,7 @@ export function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition-colors"
+            className="md:hidden inline-flex items-center justify-center p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-all duration-200 hover:shadow-sm dark:hover:shadow-gray-900/20"
             aria-label="Toggle mobile menu"
           >
             {isMobileMenuOpen ? (
@@ -79,27 +79,27 @@ export function Header() {
 
       {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-lg">
+        <div className="md:hidden border-t border-gray-200/60 dark:border-gray-800/60 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md shadow-lg dark:shadow-gray-900/30">
           <div className="px-4 py-2 space-y-1">
             {/* Mobile Navigation Links */}
             <Link
               href="/about"
               onClick={closeMobileMenu}
-              className="block px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 rounded-md transition-colors"
+              className="block px-3 py-3 text-base font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-gray-800/80 rounded-lg transition-all duration-200 hover:shadow-sm dark:hover:shadow-gray-900/20"
             >
               About
             </Link>
             <Link
               href="/pricing"
               onClick={closeMobileMenu}
-              className="block px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 rounded-md transition-colors"
+              className="block px-3 py-3 text-base font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-gray-800/80 rounded-lg transition-all duration-200 hover:shadow-sm dark:hover:shadow-gray-900/20"
             >
               Pricing
             </Link>
             <Link
               href="/faq"
               onClick={closeMobileMenu}
-              className="block px-3 py-3 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 rounded-md transition-colors"
+              className="block px-3 py-3 text-base font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100/80 dark:hover:bg-gray-800/80 rounded-lg transition-all duration-200 hover:shadow-sm dark:hover:shadow-gray-900/20"
             >
               FAQ
             </Link>

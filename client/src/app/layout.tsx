@@ -5,7 +5,11 @@ import { ThemeProvider } from '../components/ui/theme-provider';
 import { Header } from '../components/ui/header';
 import { Footer } from '../components/ui/footer';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata = {
   title: {
@@ -150,7 +154,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.variable} font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
