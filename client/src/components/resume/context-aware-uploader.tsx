@@ -452,11 +452,13 @@ const ContextAwareUploader: React.FC = () => {
           analysisCompleted: true
         });
 
-        // Show success message briefly
+        // Close popup after brief delay to show completion
         setTimeout(() => {
-          setUploadState(prev => ({ ...prev, success: false }));
-          
-          // Smooth scroll to analysis results
+          setUploadState(prev => ({ ...prev, isUploading: false }));
+        }, 800);
+
+        // Smooth scroll to analysis results
+        setTimeout(() => {
           const analysisSection = document.querySelector('[data-analysis-section]');
           if (analysisSection) {
             analysisSection.scrollIntoView({ 
@@ -464,6 +466,11 @@ const ContextAwareUploader: React.FC = () => {
               block: 'start' 
             });
           }
+        }, 1000);
+
+        // Show success message briefly
+        setTimeout(() => {
+          setUploadState(prev => ({ ...prev, success: false }));
         }, 3000);
       }
     } catch (error) {
