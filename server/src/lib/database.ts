@@ -24,8 +24,10 @@ class DatabaseService {
 
   constructor() {
     try {
-      // Initialize database in the server directory
-      const dbPath = join(__dirname, '../../data/resumes.db');
+      // Use Render's persistent disk path in production
+      const dbPath = process.env.NODE_ENV === 'production' 
+        ? '/opt/render/project/src/data/resumes.db'  // Render persistent path
+        : join(__dirname, '../../data/resumes.db');  // Local development path
       
       // Ensure the data directory exists
       const dataDir = dirname(dbPath);
@@ -35,6 +37,7 @@ class DatabaseService {
       }
       
       console.log(`🗄️ Initializing database at: ${dbPath}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       this.db = new Database(dbPath);
       
       // Enable WAL mode for better performance

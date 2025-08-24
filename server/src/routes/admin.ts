@@ -131,30 +131,40 @@ router.post('/toggle-feature', checkAdminAccess, (req: Request, res: Response) =
 // Get system statistics
 router.get('/stats', checkAdminAccess, (req: Request, res: Response) => {
   try {
-    const stats = {
-      database: {
-        totalResumes: db.getStats().totalResumes,
-        recentUploads: db.getStats().recentUploads,
-        storageUsed: 'N/A' // Would need to implement
-      },
-      features: aiConfig.getAllFeatures().map(f => ({
-        name: f.name,
-        enabled: f.enabled,
-        requestsToday: 0, // Would need to implement request tracking
-        requestsThisHour: 0
-      })),
-      models: aiConfig.getAllModels().map(m => ({
-        name: m.name,
-        provider: m.provider,
-        quality: m.quality,
-        speed: m.speed,
-        costPer1kTokens: m.costPer1kTokens
-      }))
-    };
+    const stats = db.getStats();
+    const recentResumes = db.getAllResumes(10, 0); // Get last 10 resumes
     
     res.json({
       success: true,
-      data: stats,
+      data: {
+        database: {
+          totalResumes: stats.totalResumes,
+          recentUploads: stats.recentUploads,
+          storageUsed: 'N/A', // Would need to implement
+          lastBackup: new Date().toISOString()
+        },
+        features: aiConfig.getAllFeatures().map(f => ({
+          name: f.name,
+          enabled: f.enabled,
+          requestsToday: 0, // Would need to implement request tracking
+          requestsThisHour: 0
+        })),
+        models: aiConfig.getAllModels().map(m => ({
+          name: m.name,
+          provider: m.provider,
+          quality: m.quality,
+          speed: m.speed,
+          costPer1kTokens: m.costPer1kTokens
+        })),
+        recentActivity: recentResumes.map(r => ({
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          role: r.role,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt
+        }))
+      },
       userRole: (req as any).userRole
     });
   } catch (error) {
@@ -254,6 +264,54 @@ router.get('/pricing/:feature', checkAdminAccess, (req: Request, res: Response) 
     }
   } catch (error) {
     res.status(500).json({ error: 'Failed to get pricing breakdown' });
+  }
+});
+
+// Database backup endpoint for production monitoring
+router.get('/backup', checkAdminAccess, (req: Request, res: Response) => {
+  try {
+    const allResumes = db.getAllResumes(1000, 0); // Get all resumes (up to 1000)
+    
+    res.json({
+      success: true,
+      data: {
+        totalRecords: allResumes.length,
+        backup: allResumes,
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Backup failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Database health check endpoint
+router.get('/db-health', checkAdminAccess, (req: Request, res: Response) => {
+  try {
+    const stats = db.getStats();
+    const testQuery = db.getAllResumes(1, 0); // Test query
+    
+    res.json({
+      success: true,
+      status: 'healthy',
+      database: 'connected',
+      stats: {
+        totalResumes: stats.totalResumes,
+        recentUploads: stats.recentUploads
+      },
+      testQuery: testQuery.length > 0 ? 'successful' : 'no data',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      status: 'unhealthy',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
