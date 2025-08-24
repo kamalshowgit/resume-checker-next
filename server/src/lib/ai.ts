@@ -432,7 +432,7 @@ export async function calculateATSScore(text: string): Promise<{
     reasoning: string;
   }>;
 }> {
-  // Default to Groq for all AI functions
+  
   const provider = process.env.AI_PROVIDER_RESUME || process.env.AI_PROVIDER || 'groq';
   const config = getOpenAICompatibleConfig(provider);
   const model = process.env.AI_MODEL_RESUME || process.env.AI_MODEL || config.defaultModel;
@@ -471,14 +471,24 @@ IMPORTANT: Only score sections that actually exist in the resume. Based on my an
 
 Provide a comprehensive JSON response with:
 
-1. Overall ATS score (0-100)
-2. Breakdown scores for ALL sections (keywords, formatting, experience, skills, achievements, contactInfo, certifications, languages, projects, volunteerWork) - use 0 for non-existent sections
-3. Up to 5 specific suggestions with category, issue, suggestion, and impact score (1-10)
-4. Top 3-5 job profiles this resume matches best, with match scores and reasoning
+1. Breakdown scores for ALL sections (keywords, formatting, experience, skills, achievements, contactInfo, certifications, languages, projects, volunteerWork) - use 0 for non-existent sections
+2. Up to 5 specific suggestions with category, issue, suggestion, and impact score (1-10)
+3. Top 3-5 job profiles this resume matches best, with match scores and reasoning
+
+IMPORTANT SCORING RULES:
+- Keywords: Score based on relevant industry terms, technical skills, and job-specific vocabulary
+- Formatting: Score based on structure, readability, bullet points, and professional layout
+- Experience: Score based on detail, achievements, action verbs, and quantifiable results
+- Skills: Score based on relevance, variety, and technical proficiency
+- Achievements: Score based on impact, metrics, and measurable outcomes
+- Contact Info: Score based on completeness and professionalism
+- Certifications: Score based on relevance and industry recognition
+- Languages: Score based on proficiency levels and relevance
+- Projects: Score based on complexity, impact, and technical depth
+- Volunteer Work: Score based on relevance and community impact
 
 Response format:
 {
-  "score": 85,
   "breakdown": {
     "keywords": 90,
     "formatting": 85,
@@ -513,80 +523,79 @@ IMPORTANT:
 - Only score sections that actually exist in the resume (use 0 for missing sections)
 - Base your scoring on the actual content present, not assumptions
 - Provide realistic job profile matches based on skills and experience
-- Use specific job titles that match the candidate's background`;
+- Use specific job titles that match the candidate's background
+- Score each section independently based on its quality and relevance`;
 
-    const requestBody = {
-      model,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.1, // Lower temperature for more consistent results
-      max_tokens: 1500 // Increased for comprehensive response
-    };
-
-    console.log(`[ATS Score] Sending request to ${base}/chat/completions`);
-    console.log(`[ATS Score] Request payload:`, { model, temperature: requestBody.temperature, max_tokens: requestBody.max_tokens });
-
-    const resp = await fetch(`${base}/chat/completions`, {
+    console.log(`[ATS Score] Sending prompt to AI model...`);
+    
+    const response = await fetch(`${base}/chat/completions`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert resume analyst and ATS optimization specialist. Analyze resumes objectively and provide accurate, actionable feedback. Always respond with valid JSON.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.1, // Very low temperature for consistent scoring
+        max_tokens: 2000
+      })
     });
 
-    console.log(`[ATS Score] Response status: ${resp.status}`);
-
-    if (!resp.ok) {
-      if (resp.status === 429) {
-        console.error('[ATS Score] Rate limit reached');
-        throw new Error('AI service rate limit reached. Please try again later.');
-      }
-      if (resp.status === 401) {
-        console.error('[ATS Score] Authentication failed - check API key');
-        throw new Error('AI service authentication failed. Please check your API key configuration.');
-      }
-      if (resp.status === 400) {
-        console.error('[ATS Score] Bad request - check model name and parameters');
-        throw new Error('AI service configuration error. Please check model settings.');
-      }
-      
-      const errorText = await resp.text();
-      console.error(`[ATS Score] API Error ${resp.status}: ${errorText}`);
-      throw new Error(`AI service error: ${resp.status} - ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[ATS Score] API Error ${response.status}: ${errorText}`);
+      throw new Error(`AI service error: ${response.status} - ${errorText}`);
     }
 
-    const data: any = await resp.json();
-    console.log(`[ATS Score] Response received, choices: ${data?.choices?.length || 0}`);
-    
+    const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
     
     if (content) {
       try {
-        // Clean the content to remove control characters and formatting issues
-        const cleanedContent = content
-          .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control characters
-          .replace(/\n/g, ' ') // Replace newlines with spaces
-          .replace(/\r/g, ' ') // Replace carriage returns with spaces
-          .replace(/\t/g, ' ') // Replace tabs with spaces
-          .replace(/\s+/g, ' ') // Normalize whitespace
-          .trim();
-        
-        console.log(`[ATS Score] Content cleaned, length: ${cleanedContent.length}`);
-        
-        // Extract JSON from response
-        const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+        // Extract JSON from the response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const result = JSON.parse(jsonMatch[0]);
           
           // Validate the result structure
-          if (result.score && result.breakdown && result.suggestions) {
-            // Ensure jobProfiles exists, if not create empty array
-            if (!result.jobProfiles) {
-              result.jobProfiles = [];
-            }
+          if (result && typeof result === 'object' && result.breakdown) {
+            // Calculate overall score as weighted average of section scores
+            const weights = {
+              keywords: 0.20,      // 20% - Most important for ATS
+              formatting: 0.15,    // 15% - Structure and readability
+              experience: 0.20,    // 20% - Work history and achievements
+              skills: 0.15,        // 15% - Technical and soft skills
+              achievements: 0.10,  // 10% - Quantifiable results
+              contactInfo: 0.05,   // 5% - Basic requirement
+              certifications: 0.05, // 5% - Professional development
+              languages: 0.03,     // 3% - Additional skill
+              projects: 0.05,      // 5% - Portfolio and experience
+              volunteerWork: 0.02  // 2% - Community involvement
+            };
             
-            // Validate score range
-            if (result.score < 0 || result.score > 100) {
-              console.warn(`[ATS Score] Score out of range: ${result.score}, clamping to 0-100`);
-              result.score = Math.max(0, Math.min(100, result.score));
-            }
+            let weightedScore = 0;
+            let totalWeight = 0;
+            
+            // Calculate weighted average only for sections that exist (non-zero scores)
+            Object.entries(result.breakdown).forEach(([section, score]) => {
+              if (typeof score === 'number' && score > 0 && weights[section as keyof typeof weights]) {
+                weightedScore += score * weights[section as keyof typeof weights];
+                totalWeight += weights[section as keyof typeof weights];
+              }
+            });
+            
+            // Calculate final weighted average
+            const overallScore = totalWeight > 0 ? Math.round(weightedScore / totalWeight) : 0;
+            
+            // Ensure score is within valid range
+            result.score = Math.max(0, Math.min(100, overallScore));
             
             // Validate breakdown scores
             Object.keys(result.breakdown).forEach(key => {
@@ -596,12 +605,13 @@ IMPORTANT:
               }
             });
             
-          console.log('[ATS Score] AI analysis completed successfully');
-            console.log(`[ATS Score] Final score: ${result.score}`);
+            console.log('[ATS Score] AI analysis completed successfully');
+            console.log(`[ATS Score] Weighted average score: ${result.score}`);
+            console.log(`[ATS Score] Section breakdown:`, result.breakdown);
             console.log(`[ATS Score] Suggestions count: ${result.suggestions.length}`);
             console.log(`[ATS Score] Job profiles count: ${result.jobProfiles.length}`);
             
-          return result;
+            return result;
           } else {
             console.error('[ATS Score] Invalid result structure:', result);
             throw new Error('AI service returned invalid result structure. Please try again.');
@@ -1081,18 +1091,84 @@ function detectResumeSections(text: string): {
   hasVolunteerWork: boolean;
 } {
   const lowerText = text.toLowerCase();
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  // More sophisticated section detection
+  const hasSummary = (
+    /(summary|objective|profile|overview|about)/i.test(text) ||
+    /^[A-Z][a-z]+ [A-Z][a-z]+/m.test(text) && // Name at the top
+    lines.length > 0 && 
+    lines[0].length < 100 && // First line is short (likely name/title)
+    !/(email|phone|address|linkedin|github)/i.test(lines[0]) // Not contact info
+  );
+  
+  const hasExperience = (
+    /(experience|employment|work history|career|job|position|role)/i.test(text) ||
+    /(20\d{2}|19\d{2})\s*[-–—]\s*(20\d{2}|19\d{2}|present|current)/i.test(text) || // Date ranges
+    /(january|february|march|april|may|june|july|august|september|october|november|december)/i.test(text) || // Month names
+    /(developed|implemented|managed|led|created|designed|achieved|increased|improved|reduced|delivered|coordinated|optimized|streamlined|facilitated)/i.test(text) // Action verbs
+  );
+  
+  const hasEducation = (
+    /(education|degree|university|college|school|bachelor|master|phd|b\.s\.|m\.s\.|b\.a\.|m\.a\.)/i.test(text) ||
+    /(university|college|institute|academy)/i.test(text) ||
+    /(gpa|grade point average|honors|dean's list|cum laude)/i.test(text)
+  );
+  
+  const hasSkills = (
+    /(skills?|competencies|expertise|technologies|tools|languages?|frameworks|libraries)/i.test(text) ||
+    /(javascript|python|java|react|node\.js|sql|aws|docker|kubernetes|git|agile|scrum)/i.test(text) || // Technical skills
+    /(leadership|communication|problem solving|project management|teamwork|analytical|creative)/i.test(text) // Soft skills
+  );
+  
+  const hasAchievements = (
+    /(achievements|accomplishments|awards|recognition|results|impact|outcomes)/i.test(text) ||
+    /\d+%|\d+x|\$\d+|\d+ users|\d+ customers|\d+ projects/i.test(text) || // Quantifiable metrics
+    /(increased|decreased|improved|reduced|achieved|delivered|completed|launched)/i.test(text) // Achievement verbs
+  );
+  
+  const hasContactInfo = (
+    /(email|phone|address|linkedin|github|portfolio|website|contact)/i.test(text) ||
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(text) || // Email pattern
+    /(\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/.test(text) || // Phone pattern
+    /(linkedin\.com|github\.com|portfolio\.com)/i.test(text) // Social media
+  );
+  
+  const hasCertifications = (
+    /(certification|certified|license|accreditation|course|training|workshop|seminar)/i.test(text) ||
+    /(aws certified|google certified|microsoft certified|cisco certified|pmp|scrum master)/i.test(text) || // Common certs
+    /(certificate|diploma|badge|credential)/i.test(text)
+  );
+  
+  const hasLanguages = (
+    /(languages?|fluent|proficient|bilingual|multilingual|native|intermediate|beginner)/i.test(text) ||
+    /(english|spanish|french|german|chinese|japanese|korean|arabic|hindi|portuguese|italian|russian)/i.test(text) || // Common languages
+    /(speaking|writing|reading|listening)/i.test(text) // Language skills
+  );
+  
+  const hasProjects = (
+    /(projects?|portfolio|case studies|work samples|applications|demos|prototypes)/i.test(text) ||
+    /(github\.com|gitlab\.com|bitbucket\.org|codepen\.io|dribbble\.com|behance\.net)/i.test(text) || // Portfolio sites
+    /(built|developed|created|designed|implemented|launched|deployed)/i.test(text) // Project verbs
+  );
+  
+  const hasVolunteerWork = (
+    /(volunteer|community service|charity|non-profit|pro bono|social impact|community outreach)/i.test(text) ||
+    /(ngo|foundation|organization|association|club|society)/i.test(text) ||
+    /(donated|contributed|supported|helped|assisted|mentored)/i.test(text) // Volunteer verbs
+  );
   
   return {
-    hasSummary: /(summary|objective|profile|overview)/i.test(text),
-    hasExperience: /(experience|employment|work history|career|job)/i.test(text),
-    hasEducation: /(education|degree|university|college|school|bachelor|master|phd)/i.test(text),
-    hasSkills: /(skills?|competencies|expertise|technologies)/i.test(text),
-    hasAchievements: /(achievements|accomplishments|awards|recognition|results)/i.test(text),
-    hasContactInfo: /(email|phone|address|linkedin|github|portfolio|website)/i.test(text),
-    hasCertifications: /(certification|certified|license|accreditation|course)/i.test(text),
-    hasLanguages: /(languages?|fluent|proficient|bilingual|english|spanish|french|german|chinese|japanese)/i.test(text),
-    hasProjects: /(projects?|portfolio|case studies|work samples|applications)/i.test(text),
-    hasVolunteerWork: /(volunteer|community service|charity|non-profit|pro bono)/i.test(text)
+    hasSummary,
+    hasExperience,
+    hasEducation,
+    hasSkills,
+    hasAchievements,
+    hasContactInfo,
+    hasCertifications,
+    hasLanguages,
+    hasProjects,
+    hasVolunteerWork
   };
 }
 
@@ -1117,58 +1193,47 @@ export async function getFastInitialAnalysis(text: string): Promise<{
     console.log(`🔍 Detected sections:`, sections);
     console.log(`🔑 Found keywords:`, keywords);
     
-    // Calculate basic score based on content length and structure
-    let baseScore = 50;
-    
-    // Boost score for good content length
-    if (text.length > 500) baseScore += 10;
-    if (text.length > 1000) baseScore += 10;
-    if (text.length > 2000) baseScore += 5;
-    
-    // Boost score for having key sections
-    if (sections.hasSummary) baseScore += 8;
-    if (sections.hasExperience) baseScore += 12;
-    if (sections.hasSkills) baseScore += 12;
-    if (sections.hasEducation) baseScore += 6;
-    if (sections.hasContactInfo) baseScore += 6;
-    if (sections.hasProjects) baseScore += 5;
-    if (sections.hasCertifications) baseScore += 4;
-    
-    // Boost score for good formatting (proper line breaks, bullet points)
-    const lines = text.split('\n').filter(line => line.trim().length > 0);
-    if (lines.length > 10) baseScore += 5;
-    if (lines.length > 20) baseScore += 3;
-    
-    // Boost score for action verbs and quantifiable achievements
-    const actionVerbs = ['developed', 'implemented', 'managed', 'led', 'created', 'designed', 'achieved', 'increased', 'improved', 'reduced', 'delivered', 'coordinated', 'optimized', 'streamlined', 'facilitated'];
-    const hasActionVerbs = actionVerbs.some(verb => text.toLowerCase().includes(verb));
-    if (hasActionVerbs) baseScore += 8;
-    
-    // Boost score for numbers and metrics
-    const hasMetrics = /\d+%|\d+x|\$\d+|\d+ users|\d+ customers/.test(text);
-    if (hasMetrics) baseScore += 5;
-    
-    // Boost score for technical keywords
-    const technicalKeywords = ['javascript', 'python', 'react', 'node.js', 'aws', 'docker', 'kubernetes', 'sql', 'api', 'git', 'agile', 'scrum'];
-    const hasTechnicalKeywords = technicalKeywords.some(keyword => text.toLowerCase().includes(keyword));
-    if (hasTechnicalKeywords) baseScore += 5;
-    
-    // Cap score at 90 for initial analysis (increased from 85)
-    const finalScore = Math.min(baseScore, 90);
-    
     // Generate comprehensive breakdown with better scoring
     const breakdown: Record<string, number> = {
       keywords: sections.hasSkills ? 75 : 45,
-      formatting: lines.length > 10 ? 80 : 55,
+      formatting: text.split('\n').filter(line => line.trim().length > 0).length > 10 ? 80 : 55,
       experience: sections.hasExperience ? 80 : 45,
       skills: sections.hasSkills ? 80 : 45,
-      achievements: hasActionVerbs ? 80 : 50,
+      achievements: text.toLowerCase().includes('developed') || text.toLowerCase().includes('implemented') || text.toLowerCase().includes('managed') ? 80 : 50,
       contactInfo: sections.hasContactInfo ? 85 : 35,
       certifications: sections.hasCertifications ? 75 : 0,
       languages: sections.hasLanguages ? 75 : 0,
       projects: sections.hasProjects ? 75 : 0,
       volunteerWork: sections.hasVolunteerWork ? 75 : 0
     };
+    
+    // Calculate overall score as weighted average of section scores (same as main ATS function)
+    const weights = {
+      keywords: 0.20,      // 20% - Most important for ATS
+      formatting: 0.15,    // 15% - Structure and readability
+      experience: 0.20,    // 20% - Work history and achievements
+      skills: 0.15,        // 15% - Technical and soft skills
+      achievements: 0.10,  // 10% - Quantifiable results
+      contactInfo: 0.05,   // 5% - Basic requirement
+      certifications: 0.05, // 5% - Professional development
+      languages: 0.03,     // 3% - Additional skill
+      projects: 0.05,      // 5% - Portfolio and experience
+      volunteerWork: 0.02  // 2% - Community involvement
+    };
+    
+    let weightedScore = 0;
+    let totalWeight = 0;
+    
+    // Calculate weighted average only for sections that exist (non-zero scores)
+    Object.entries(breakdown).forEach(([section, score]) => {
+      if (typeof score === 'number' && score > 0 && weights[section as keyof typeof weights]) {
+        weightedScore += score * weights[section as keyof typeof weights];
+        totalWeight += weights[section as keyof typeof weights];
+      }
+    });
+    
+    // Calculate final weighted average
+    const finalScore = totalWeight > 0 ? Math.round(weightedScore / totalWeight) : 0;
     
     // Generate comprehensive suggestions
     const suggestions: Array<{ category: string; issue: string; suggestion: string; impact: number }> = [];
@@ -1200,6 +1265,24 @@ export async function getFastInitialAnalysis(text: string): Promise<{
       });
     }
     
+    if (!sections.hasEducation) {
+      suggestions.push({
+        category: 'education',
+        issue: 'Missing education section',
+        suggestion: 'Include your educational background with degrees and relevant coursework',
+        impact: 6
+      });
+    }
+    
+    if (!sections.hasContactInfo) {
+      suggestions.push({
+        category: 'contactInfo',
+        issue: 'Missing contact information',
+        suggestion: 'Add your email, phone, and professional social media profiles',
+        impact: 7
+      });
+    }
+    
     if (text.length < 500) {
       suggestions.push({
         category: 'content',
@@ -1209,6 +1292,10 @@ export async function getFastInitialAnalysis(text: string): Promise<{
       });
     }
     
+    // Check for action verbs
+    const actionVerbs = ['developed', 'implemented', 'managed', 'led', 'created', 'designed', 'achieved', 'increased', 'improved', 'reduced', 'delivered', 'coordinated', 'optimized', 'streamlined', 'facilitated'];
+    const hasActionVerbs = actionVerbs.some(verb => text.toLowerCase().includes(verb));
+    
     if (!hasActionVerbs) {
       suggestions.push({
         category: 'achievements',
@@ -1217,6 +1304,9 @@ export async function getFastInitialAnalysis(text: string): Promise<{
         impact: 6
       });
     }
+    
+    // Check for metrics
+    const hasMetrics = /\d+%|\d+x|\$\d+|\d+ users|\d+ customers/.test(text);
     
     if (!hasMetrics) {
       suggestions.push({
@@ -1239,6 +1329,10 @@ export async function getFastInitialAnalysis(text: string): Promise<{
     if (sections.hasSkills) keyPoints.push('Skills section identified');
     if (hasActionVerbs) keyPoints.push('Action-oriented language found');
     if (hasMetrics) keyPoints.push('Quantifiable achievements present');
+    
+    // Check for technical keywords
+    const technicalKeywords = ['javascript', 'python', 'react', 'node.js', 'aws', 'docker', 'kubernetes', 'sql', 'api', 'git', 'agile', 'scrum'];
+    const hasTechnicalKeywords = technicalKeywords.some(keyword => text.toLowerCase().includes(keyword));
     if (hasTechnicalKeywords) keyPoints.push('Technical skills identified');
     
     // Generate job profiles based on content analysis
