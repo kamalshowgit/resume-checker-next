@@ -5,7 +5,6 @@ import ContextAwareUploader from '@/components/resume/context-aware-uploader';
 import ContextAwareChatbot from '@/components/resume/context-aware-chatbot';
 import { ResumeAnalysis } from '@/components/resume/resume-analysis';
 import { ResumeProvider, useResumeContext } from '@/lib/context/resume-context';
-import { ProductionDebugger } from '@/components/ui/production-debugger';
 
 const HomeContent = () => {
   const { state } = useResumeContext();
@@ -89,11 +88,6 @@ const HomeContent = () => {
             <ContextAwareChatbot />
           </div>
         </div>
-      </div>
-
-      {/* Add Production Debugger for monitoring */}
-      <div className="container mx-auto px-4 py-8">
-        <ProductionDebugger />
       </div>
     </>
   );
