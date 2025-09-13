@@ -23,6 +23,27 @@ const checkAdminAccess = (req: Request, res: Response, next: NextFunction) => {
   res.status(401).json({ error: 'Unauthorized access' });
 };
 
+// Middleware for secure admin authentication with ID/Password
+const checkSecureAdminAccess = (req: Request, res: Response, next: NextFunction) => {
+  const adminId = req.headers['x-admin-id'] || req.body.adminId || req.query.adminId;
+  const adminPassword = req.headers['x-admin-password'] || req.body.adminPassword || req.query.adminPassword;
+  
+  // Hardcoded secure credentials
+  const SECURE_ADMIN_ID = 'Kamal3839';
+  const SECURE_ADMIN_PASSWORD = 'Kamal@3839';
+  
+  if (adminId === SECURE_ADMIN_ID && adminPassword === SECURE_ADMIN_PASSWORD) {
+    (req as any).userRole = 'secure_admin';
+    (req as any).adminId = adminId;
+    return next();
+  }
+  
+  res.status(401).json({ 
+    error: 'Unauthorized access',
+    message: 'Invalid admin credentials'
+  });
+};
+
 // Get current AI configuration
 router.get('/ai-config', checkAdminAccess, (req: Request, res: Response) => {
   try {
@@ -311,6 +332,172 @@ router.get('/db-health', checkAdminAccess, (req: Request, res: Response) => {
       success: false,
       status: 'unhealthy',
       error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// SECURE ADMIN ENDPOINTS - Require ID/Password authentication
+
+// Get all data with secure authentication
+router.get('/secure/all-data', checkSecureAdminAccess, (req: Request, res: Response) => {
+  try {
+    const stats = db.getStats();
+    const allResumes = db.getAllResumes(10000, 0); // Get all resumes (up to 10,000)
+    
+    // Format the data for easy export
+    const formattedData = {
+      exportInfo: {
+        exportedBy: (req as any).adminId,
+        exportDate: new Date().toISOString(),
+        totalRecords: allResumes.length,
+        environment: process.env.NODE_ENV || 'development'
+      },
+      summary: {
+        totalResumes: stats.totalResumes,
+        recentUploads: stats.recentUploads,
+        averageATSScore: stats.averageATSScore || 0
+      },
+      resumes: allResumes.map(resume => ({
+        id: resume.id,
+        personalInfo: {
+          name: resume.name,
+          email: resume.email,
+          phone: resume.phone,
+          linkedin: resume.linkedin,
+          location: resume.location
+        },
+        professionalInfo: {
+          role: resume.role,
+          experienceYears: resume.experienceYears,
+          skills: resume.skills ? JSON.parse(resume.skills) : null,
+          education: resume.education
+        },
+        analysisResults: {
+          atsScore: resume.atsScore,
+          atsBreakdown: resume.atsBreakdown ? JSON.parse(resume.atsBreakdown) : null,
+          analysisResults: resume.analysisResults ? JSON.parse(resume.analysisResults) : null
+        },
+        fileInfo: {
+          fileType: resume.fileType,
+          fileSize: resume.fileSize,
+          uploadSource: resume.uploadSource
+        },
+        timestamps: {
+          createdAt: resume.createdAt,
+          updatedAt: resume.updatedAt
+        },
+        fullResumeText: resume.resumeText,
+        extractedData: resume.extractedData ? JSON.parse(resume.extractedData) : null
+      }))
+    };
+    
+    res.json({
+      success: true,
+      message: 'All data exported successfully',
+      data: formattedData,
+      userRole: (req as any).userRole,
+      adminId: (req as any).adminId
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to export data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get CSV export of all data
+router.get('/secure/export-csv', checkSecureAdminAccess, (req: Request, res: Response) => {
+  try {
+    const allResumes = db.getAllResumes(10000, 0);
+    
+    // Create CSV headers
+    const csvHeaders = [
+      'ID', 'Name', 'Email', 'Phone', 'LinkedIn', 'Location', 'Role', 
+      'Experience Years', 'Skills', 'Education', 'ATS Score', 'File Type', 
+      'File Size', 'Upload Source', 'Created At', 'Updated At'
+    ];
+    
+    // Create CSV rows
+    const csvRows = allResumes.map(resume => [
+      resume.id,
+      resume.name || '',
+      resume.email || '',
+      resume.phone || '',
+      resume.linkedin || '',
+      resume.location || '',
+      resume.role || '',
+      resume.experienceYears || '',
+      resume.skills || '',
+      resume.education || '',
+      resume.atsScore || '',
+      resume.fileType || '',
+      resume.fileSize || '',
+      resume.uploadSource || '',
+      resume.createdAt || '',
+      resume.updatedAt || ''
+    ]);
+    
+    // Combine headers and rows
+    const csvContent = [csvHeaders, ...csvRows]
+      .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="resume_data_export_${new Date().toISOString().split('T')[0]}.csv"`);
+    res.send(csvContent);
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to export CSV',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get statistics with secure authentication
+router.get('/secure/stats', checkSecureAdminAccess, (req: Request, res: Response) => {
+  try {
+    const stats = db.getStats();
+    const recentResumes = db.getAllResumes(20, 0);
+    const topResumes = db.getTopResumes(10);
+    
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          totalResumes: stats.totalResumes,
+          recentUploads: stats.recentUploads,
+          averageATSScore: stats.averageATSScore || 0
+        },
+        recentActivity: recentResumes.map(r => ({
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          role: r.role,
+          atsScore: r.atsScore,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt
+        })),
+        topPerformers: topResumes.map(r => ({
+          id: r.id,
+          name: r.name,
+          email: r.email,
+          role: r.role,
+          atsScore: r.atsScore,
+          createdAt: r.createdAt
+        }))
+      },
+      userRole: (req as any).userRole,
+      adminId: (req as any).adminId,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to get statistics',
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

@@ -26,6 +26,7 @@ export interface ResumeAnalysisResponse {
   analysisNote?: string;
 }
 
+
 export interface ChatResponse {
   success: boolean;
   response?: string;
@@ -37,6 +38,70 @@ export interface ServerStatusResponse {
   status: 'online' | 'offline' | 'checking';
   timestamp: string;
   error?: string;
+}
+
+export interface DebugDataResponse {
+  success: boolean;
+  status: string;
+  database: string;
+  stats: {
+    totalResumes: number;
+    recentUploads: number;
+  };
+  recentResumes: Array<{
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  timestamp: string;
+  environment: string;
+}
+
+export interface AdminStatsResponse {
+  success: boolean;
+  data: {
+    database: {
+      totalResumes: number;
+      recentUploads: number;
+      storageUsed: string;
+      lastBackup: string;
+    };
+    features: Array<{
+      name: string;
+      enabled: boolean;
+      requestsToday: number;
+      requestsThisHour: number;
+    }>;
+    models: Array<{
+      name: string;
+      provider: string;
+      quality: string;
+      speed: string;
+      costPer1kTokens: number;
+    }>;
+    recentActivity: Array<{
+      id: number;
+      name: string;
+      email: string;
+      role: string;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+  };
+  userRole: string;
+}
+
+export interface DatabaseBackupResponse {
+  success: boolean;
+  data: {
+    totalRecords: number;
+    backup: Array<any>;
+    timestamp: string;
+    environment: string;
+  };
 }
 
 // API Service class
@@ -229,6 +294,113 @@ class APIService {
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  // Get debug data (public endpoint - no auth required)
+  async getDebugData(): Promise<DebugDataResponse> {
+    try {
+      const response = await this.api.get('/debug-data');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get debug data:', error);
+      throw error;
+    }
+  }
+
+  // Get admin statistics (requires authentication)
+  async getAdminStats(apiKey: string): Promise<AdminStatsResponse> {
+    try {
+      const response = await this.api.get('/api/admin/stats', {
+        headers: {
+          'x-demo-key': apiKey
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get admin stats:', error);
+      throw error;
+    }
+  }
+
+  // Get database backup (requires authentication)
+  async getDatabaseBackup(apiKey: string): Promise<DatabaseBackupResponse> {
+    try {
+      const response = await this.api.get('/api/admin/backup', {
+        headers: {
+          'x-demo-key': apiKey
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get database backup:', error);
+      throw error;
+    }
+  }
+
+  // Get database health (requires authentication)
+  async getDatabaseHealth(apiKey: string): Promise<any> {
+    try {
+      const response = await this.api.get('/api/admin/db-health', {
+        headers: {
+          'x-demo-key': apiKey
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get database health:', error);
+      throw error;
+    }
+  }
+
+  // SECURE ADMIN METHODS - Require ID/Password authentication
+
+  // Get all data with secure authentication
+  async getAllDataSecure(adminId: string, adminPassword: string): Promise<any> {
+    try {
+      const response = await this.api.get('/api/admin/secure/all-data', {
+        headers: {
+          'x-admin-id': adminId,
+          'x-admin-password': adminPassword
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get all data:', error);
+      throw error;
+    }
+  }
+
+  // Get CSV export with secure authentication
+  async exportCSVSecure(adminId: string, adminPassword: string): Promise<Blob> {
+    try {
+      const response = await this.api.get('/api/admin/secure/export-csv', {
+        headers: {
+          'x-admin-id': adminId,
+          'x-admin-password': adminPassword
+        },
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      throw error;
+    }
+  }
+
+  // Get secure statistics
+  async getSecureStats(adminId: string, adminPassword: string): Promise<any> {
+    try {
+      const response = await this.api.get('/api/admin/secure/stats', {
+        headers: {
+          'x-admin-id': adminId,
+          'x-admin-password': adminPassword
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get secure stats:', error);
+      throw error;
     }
   }
 }

@@ -5,6 +5,7 @@ import ContextAwareUploader from '@/components/resume/context-aware-uploader';
 import ContextAwareChatbot from '@/components/resume/context-aware-chatbot';
 import { ResumeAnalysis } from '@/components/resume/resume-analysis';
 import { ResumeProvider, useResumeContext } from '@/lib/context/resume-context';
+import { AdminDataFetcher } from '@/components/ui/admin-data-fetcher';
 
 const HomeContent = () => {
   const { state } = useResumeContext();
@@ -87,6 +88,13 @@ const HomeContent = () => {
           <div id="chatbot">
             <ContextAwareChatbot />
           </div>
+
+          {/* Admin Data Access - Hidden by default, accessible via URL */}
+          {typeof window !== 'undefined' && window.location.search.includes('admin=true') && (
+            <div className="mt-12">
+              <AdminDataFetcher />
+            </div>
+          )}
         </div>
       </div>
     </>
