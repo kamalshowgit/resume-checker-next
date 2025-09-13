@@ -27,6 +27,7 @@ export interface ResumeAnalysisResponse {
 }
 
 
+
 export interface ChatResponse {
   success: boolean;
   response?: string;
