@@ -15,6 +15,12 @@ export interface ResumeRecord {
   education?: string | null;
   resumeText: string;
   extractedData?: string | null; // JSON string of all extracted data
+  atsScore?: number | null; // ATS score for quick access
+  atsBreakdown?: string | null; // ATS breakdown (JSON)
+  analysisResults?: string | null; // Full analysis results (JSON)
+  fileType?: string | null; // Original file type (PDF, DOCX, etc.)
+  fileSize?: number | null; // Original file size
+  uploadSource?: string | null; // Source of upload
   createdAt?: string;
   updatedAt?: string;
 }
@@ -51,7 +57,7 @@ class DatabaseService {
   }
 
   private initializeTables() {
-    // Create resumes table
+    // Create resumes table with enhanced storage
     const createResumeTable = `
       CREATE TABLE IF NOT EXISTS resumes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,6 +72,12 @@ class DatabaseService {
         education TEXT,
         resumeText TEXT NOT NULL,
         extractedData TEXT, -- JSON string of all extracted data
+        atsScore INTEGER, -- ATS score for quick access
+        atsBreakdown TEXT, -- ATS breakdown (JSON)
+        analysisResults TEXT, -- Full analysis results (JSON)
+        fileType TEXT, -- Original file type (PDF, DOCX, etc.)
+        fileSize INTEGER, -- Original file size
+        uploadSource TEXT DEFAULT 'web', -- Source of upload
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -73,12 +85,16 @@ class DatabaseService {
     
     this.db.exec(createResumeTable);
     
-    // Create indexes for efficient duplicate detection
+    // Create indexes for efficient duplicate detection and queries
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_email ON resumes(email)');
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_phone ON resumes(phone)');
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_linkedin ON resumes(linkedin)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_created_at ON resumes(createdAt)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_updated_at ON resumes(updatedAt)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_ats_score ON resumes(atsScore)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_role ON resumes(role)');
     
-    console.log('📊 Database initialized successfully');
+    console.log('📊 Database initialized successfully with enhanced storage');
   }
 
   /**
@@ -260,9 +276,22 @@ class DatabaseService {
   }
 
   /**
-   * Save or update resume data
+   * Save or update resume data with analysis results
    */
-  saveResume(resumeText: string): ResumeRecord {
+  saveResume(
+    resumeText: string, 
+    analysisResults?: {
+      atsScore?: number;
+      atsBreakdown?: any;
+      suggestions?: any[];
+      jobProfiles?: any[];
+    },
+    fileInfo?: {
+      fileType?: string;
+      fileSize?: number;
+      uploadSource?: string;
+    }
+  ): ResumeRecord {
     console.log('💾 Processing resume for database storage...');
     
     // Extract contact information
@@ -292,6 +321,12 @@ class DatabaseService {
       education: extracted.education || null,
       resumeText,
       extractedData: JSON.stringify(extracted),
+      atsScore: analysisResults?.atsScore || null,
+      atsBreakdown: analysisResults?.atsBreakdown ? JSON.stringify(analysisResults.atsBreakdown) : null,
+      analysisResults: analysisResults ? JSON.stringify(analysisResults) : null,
+      fileType: fileInfo?.fileType || null,
+      fileSize: fileInfo?.fileSize || null,
+      uploadSource: fileInfo?.uploadSource || 'web',
       updatedAt: new Date().toISOString()
     };
     
@@ -312,6 +347,12 @@ class DatabaseService {
           education = COALESCE(@education, education),
           resumeText = @resumeText,
           extractedData = @extractedData,
+          atsScore = COALESCE(@atsScore, atsScore),
+          atsBreakdown = COALESCE(@atsBreakdown, atsBreakdown),
+          analysisResults = COALESCE(@analysisResults, analysisResults),
+          fileType = COALESCE(@fileType, fileType),
+          fileSize = COALESCE(@fileSize, fileSize),
+          uploadSource = COALESCE(@uploadSource, uploadSource),
           updatedAt = @updatedAt
         WHERE id = @id
       `);
@@ -332,10 +373,12 @@ class DatabaseService {
       const insertStmt = this.db.prepare(`
         INSERT INTO resumes (
           name, email, phone, linkedin, location, role, experienceYears, 
-          skills, education, resumeText, extractedData, updatedAt
+          skills, education, resumeText, extractedData, atsScore, atsBreakdown,
+          analysisResults, fileType, fileSize, uploadSource, updatedAt
         ) VALUES (
           @name, @email, @phone, @linkedin, @location, @role, @experienceYears,
-          @skills, @education, @resumeText, @extractedData, @updatedAt
+          @skills, @education, @resumeText, @extractedData, @atsScore, @atsBreakdown,
+          @analysisResults, @fileType, @fileSize, @uploadSource, @updatedAt
         )
       `);
       
@@ -361,14 +404,41 @@ class DatabaseService {
   getStats() {
     const totalStmt = this.db.prepare('SELECT COUNT(*) as total FROM resumes');
     const recentStmt = this.db.prepare("SELECT COUNT(*) as recent FROM resumes WHERE updatedAt > datetime('now', '-7 days')");
+    const avgScoreStmt = this.db.prepare('SELECT AVG(atsScore) as avgScore FROM resumes WHERE atsScore IS NOT NULL');
     
     const total = totalStmt.get() as { total: number };
     const recent = recentStmt.get() as { recent: number };
+    const avgScore = avgScoreStmt.get() as { avgScore: number };
     
     return {
       totalResumes: total.total,
-      recentUploads: recent.recent
+      recentUploads: recent.recent,
+      averageATSScore: avgScore.avgScore ? Math.round(avgScore.avgScore) : 0
     };
+  }
+
+  /**
+   * Get comprehensive resume data for admin purposes
+   */
+  getResumeById(id: number): ResumeRecord | null {
+    const stmt = this.db.prepare('SELECT * FROM resumes WHERE id = ?');
+    return stmt.get(id) as ResumeRecord || null;
+  }
+
+  /**
+   * Get resumes by email for user history
+   */
+  getResumesByEmail(email: string): ResumeRecord[] {
+    const stmt = this.db.prepare('SELECT * FROM resumes WHERE email = ? ORDER BY updatedAt DESC');
+    return stmt.all(email.toLowerCase()) as ResumeRecord[];
+  }
+
+  /**
+   * Get top performing resumes by ATS score
+   */
+  getTopResumes(limit = 10): ResumeRecord[] {
+    const stmt = this.db.prepare('SELECT * FROM resumes WHERE atsScore IS NOT NULL ORDER BY atsScore DESC LIMIT ?');
+    return stmt.all(limit) as ResumeRecord[];
   }
 
   /**
