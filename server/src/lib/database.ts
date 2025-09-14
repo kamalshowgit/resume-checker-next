@@ -21,6 +21,7 @@ export interface ResumeRecord {
   fileType?: string | null; // Original file type (PDF, DOCX, etc.)
   fileSize?: number | null; // Original file size
   uploadSource?: string | null; // Source of upload
+  version?: number; // Version number for tracking updates
   createdAt?: string;
   updatedAt?: string;
 }
@@ -57,7 +58,7 @@ class DatabaseService {
   }
 
   private initializeTables() {
-    // Create resumes table with enhanced storage
+    // Create resumes table with enhanced permanent storage
     const createResumeTable = `
       CREATE TABLE IF NOT EXISTS resumes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,6 +79,7 @@ class DatabaseService {
         fileType TEXT, -- Original file type (PDF, DOCX, etc.)
         fileSize INTEGER, -- Original file size
         uploadSource TEXT DEFAULT 'web', -- Source of upload
+        version INTEGER DEFAULT 1, -- Version number for tracking updates
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -93,8 +95,33 @@ class DatabaseService {
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_updated_at ON resumes(updatedAt)');
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_ats_score ON resumes(atsScore)');
     this.db.exec('CREATE INDEX IF NOT EXISTS idx_role ON resumes(role)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_version ON resumes(version)');
     
-    console.log('📊 Database initialized successfully with enhanced storage');
+    // Add new columns to existing tables if they don't exist (for database migrations)
+    this.migrateExistingTables();
+    
+    console.log('📊 Database initialized successfully with permanent storage capabilities');
+  }
+
+  /**
+   * Migrate existing tables to add new columns
+   */
+  private migrateExistingTables() {
+    try {
+      // Check if version column exists, if not add it
+      const columns = this.db.pragma('table_info(resumes)') as Array<{ name: string; type: string }>;
+      
+      const hasVersion = columns.some((col) => col.name === 'version');
+      if (!hasVersion) {
+        console.log('🔄 Adding version column to existing resumes table');
+        this.db.exec('ALTER TABLE resumes ADD COLUMN version INTEGER DEFAULT 1');
+      }
+
+      console.log('✅ Database migration completed successfully');
+    } catch (error) {
+      console.error('❌ Database migration failed:', error);
+      // Don't throw error as this is not critical for basic functionality
+    }
   }
 
   /**
@@ -276,7 +303,7 @@ class DatabaseService {
   }
 
   /**
-   * Save or update resume data with analysis results
+   * Save or update resume data with analysis results and permanent storage
    */
   saveResume(
     resumeText: string, 
@@ -327,6 +354,7 @@ class DatabaseService {
       fileType: fileInfo?.fileType || null,
       fileSize: fileInfo?.fileSize || null,
       uploadSource: fileInfo?.uploadSource || 'web',
+      version: existing ? (existing.version || 1) + 1 : 1, // Increment version for updates
       updatedAt: new Date().toISOString()
     };
     
@@ -353,6 +381,7 @@ class DatabaseService {
           fileType = COALESCE(@fileType, fileType),
           fileSize = COALESCE(@fileSize, fileSize),
           uploadSource = COALESCE(@uploadSource, uploadSource),
+          version = @version,
           updatedAt = @updatedAt
         WHERE id = @id
       `);
@@ -374,11 +403,11 @@ class DatabaseService {
         INSERT INTO resumes (
           name, email, phone, linkedin, location, role, experienceYears, 
           skills, education, resumeText, extractedData, atsScore, atsBreakdown,
-          analysisResults, fileType, fileSize, uploadSource, updatedAt
+          analysisResults, fileType, fileSize, uploadSource, version, updatedAt
         ) VALUES (
           @name, @email, @phone, @linkedin, @location, @role, @experienceYears,
           @skills, @education, @resumeText, @extractedData, @atsScore, @atsBreakdown,
-          @analysisResults, @fileType, @fileSize, @uploadSource, @updatedAt
+          @analysisResults, @fileType, @fileSize, @uploadSource, @version, @updatedAt
         )
       `);
       
@@ -440,6 +469,7 @@ class DatabaseService {
     const stmt = this.db.prepare('SELECT * FROM resumes WHERE atsScore IS NOT NULL ORDER BY atsScore DESC LIMIT ?');
     return stmt.all(limit) as ResumeRecord[];
   }
+
 
   /**
    * Close database connection

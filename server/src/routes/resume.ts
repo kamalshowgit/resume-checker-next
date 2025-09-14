@@ -149,8 +149,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
     console.log(`💾 Saving resume to database...`);
     
-    // Store in database using the existing saveResume method
-    const savedResume = db.saveResume(cleanedText);
+    // Store in database using the existing saveResume method with permanent storage
+    const savedResume = db.saveResume(cleanedText, undefined, {
+      fileType: mimetype,
+      fileSize: size,
+      uploadSource: 'web'
+    });
     console.log(`✅ Resume saved with ID: ${savedResume.id}`);
     
     // Get AI analysis with progressive loading

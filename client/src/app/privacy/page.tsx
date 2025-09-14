@@ -144,8 +144,12 @@ export default function PrivacyPage() {
                     Data Retention
                   </h3>
                   <p className="text-sm text-gray-600">
-                    We retain your data only as long as necessary to provide our services. 
-                    Resume content is automatically deleted after 12 months of inactivity.
+                    Your resume data is stored permanently on our secure servers. This ensures your information 
+                    is always available when you need it and allows us to provide continuous service improvements.
+                  </p>
+                  <p className="text-sm text-gray-600 mt-2">
+                    We maintain version history of your resumes so you can track changes over time. 
+                    Your data is protected with industry-standard security measures.
                   </p>
                 </div>
               </div>
@@ -162,9 +166,9 @@ export default function PrivacyPage() {
                     Access and Control
                   </h3>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• View and download your data</li>
+                    <li>• View and access your stored resume data</li>
                     <li>• Update or correct information</li>
-                    <li>• Delete your account and data</li>
+                    <li>• Access your resume version history</li>
                     <li>• Opt out of marketing communications</li>
                   </ul>
                 </div>
