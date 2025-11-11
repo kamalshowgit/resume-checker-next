@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { extractKeyPoints, searchJobs, chatSuggest, calculateATSScore, improveContent, getFastInitialAnalysis } from '../lib/ai';
+import { extractKeyPoints, searchJobs, chatSuggest, calculateATSScore, improveContent, getFastInitialAnalysis, generateLineByLineSuggestions } from '../lib/ai';
 import { db } from '../lib/database';
 import multer from 'multer';
 import mammoth from 'mammoth';
@@ -137,8 +137,26 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       });
     }
 
-    // Clean and validate text content
-    const cleanedText = extractedText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    // Clean and validate text content - improved parsing for better CV extraction
+    let cleanedText = extractedText
+      .trim()
+      .replace(/\r\n/g, '\n') // Normalize Windows line endings
+      .replace(/\r/g, '\n')   // Handle Mac line endings
+      .replace(/\n{3,}/g, '\n\n') // Remove excessive blank lines (max 2 consecutive)
+      .replace(/[ \t]+/g, ' ') // Normalize spaces and tabs within lines
+      .replace(/^\s+|\s+$/gm, ''); // Trim each line
+    
+    // Remove common PDF artifacts and formatting issues
+    cleanedText = cleanedText
+      .replace(/\f/g, '') // Remove form feeds
+      .replace(/\u0000/g, '') // Remove null characters
+      .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove zero-width characters
+      .replace(/\s*-\s*-\s*-+/g, '---') // Clean up separator lines
+      .replace(/•\s*/g, '• ') // Normalize bullet points spacing
+      .replace(/\*\s*/g, '* ') // Normalize asterisk bullets
+      .replace(/\u2022\s*/g, '• ') // Convert bullet character to bullet
+      .trim();
+    
     if (cleanedText.length < 50) {
       return res.status(400).json({ 
         error: 'Insufficient content',
@@ -146,6 +164,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         suggestion: 'Please upload a complete resume or copy-paste more content'
       });
     }
+    
+    console.log(`📄 Cleaned and parsed CV: ${cleanedText.length} characters, ${cleanedText.split('\n').filter(l => l.trim().length > 0).length} non-empty lines`);
 
     console.log(`💾 Saving resume to database...`);
     
@@ -157,260 +177,106 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     });
     console.log(`✅ Resume saved with ID: ${savedResume.id}`);
     
-    // Get AI analysis with progressive loading
-    console.log(`🤖 Starting progressive AI analysis...`);
+    // Get AI analysis - ONLY use AI model, no fallback
+    console.log(`🤖 Starting AI analysis with model...`);
     let atsScore = 0;
     let atsBreakdown = null;
     let atsSuggestions = null;
     let keyPoints: string[] = [];
-    let improvedContent: { [key: string]: string } = {};
+    let improvedContent: Record<number, { improvedText: string; suggestions: string[]; explanation: string }> = {};
     let jobProfiles: Array<{ title: string; matchScore: number; reasoning: string }> = [];
     let isFullAnalysisComplete = false;
-    
-    // Set a global timeout for the entire analysis process
-    const globalTimeout = setTimeout(() => {
-      console.log('⏰ Global analysis timeout reached - sending response with available data');
-    }, 10000); // 10 seconds total timeout
+    let serverStatus = 'online';
     
     try {
       console.log(`📝 Extracted text length: ${cleanedText.length} characters`);
       console.log(`📝 First 200 characters: ${cleanedText.substring(0, 200)}...`);
       
-      // Step 1: Get fast initial analysis (immediate response)
-      console.log(`🚀 Getting fast initial analysis...`);
-      const fastResult = await getFastInitialAnalysis(cleanedText);
+      // Parse CV content into lines for better analysis
+      const resumeLines = cleanedText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+      console.log(`📄 Parsed resume into ${resumeLines.length} lines`);
       
-      atsScore = fastResult.score;
-      atsBreakdown = fastResult.breakdown;
-      atsSuggestions = fastResult.suggestions;
-      keyPoints = fastResult.keyPoints;
-      jobProfiles = fastResult.jobProfiles;
+      // Step 1: Get AI ATS score and analysis (REQUIRED - no fallback)
+      console.log(`🚀 Getting AI ATS score...`);
+      const atsResult = await calculateATSScore(cleanedText);
       
-      console.log(`✅ Fast Analysis Complete - Score: ${atsScore}`);
-      console.log(`📊 Fast Analysis Breakdown:`, atsBreakdown);
-      console.log(`💡 Fast Analysis Suggestions:`, atsSuggestions?.length || 0);
-      console.log(`🎯 Fast Analysis Key Points:`, keyPoints?.length || 0);
+      atsScore = atsResult.score;
+      atsBreakdown = atsResult.breakdown;
+      atsSuggestions = atsResult.suggestions;
+      jobProfiles = atsResult.jobProfiles || [];
       
-      // Step 2: Start full AI analysis in background (non-blocking)
-      console.log(`🔄 Starting full AI analysis in background...`);
-      const fullAnalysisPromise = (async () => {
-        try {
-          // Production optimization: reduce timeouts and complexity
-          const isProduction = process.env.NODE_ENV === 'production';
-          const analysisTimeout = isProduction ? 20000 : 30000; // 20s in production, 30s in dev
-          
-          const [atsResult, keyPointsResult] = await Promise.all([
-            Promise.race([
-              calculateATSScore(cleanedText),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('ATS scoring timeout')), analysisTimeout)
-              )
-            ]),
-            Promise.race([
-              extractKeyPoints(cleanedText),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Key points extraction timeout')), analysisTimeout)
-              )
-            ])
-          ]);
-          
-          // Update with full AI results
-          if (typeof atsResult === 'object' && atsResult !== null) {
-            atsScore = (atsResult as any).score ?? atsScore;
-            atsBreakdown = (atsResult as any).breakdown ?? atsBreakdown;
-            atsSuggestions = (atsResult as any).suggestions ?? atsSuggestions;
-            jobProfiles = (Array.isArray((atsResult as any).jobProfiles) ? (atsResult as any).jobProfiles : []) ?? [];
-          }
-          keyPoints = Array.isArray(keyPointsResult) ? keyPointsResult : [];
-          isFullAnalysisComplete = true;
-          
-          console.log(`🎉 Full AI Analysis Complete - Score: ${atsScore}`);
-          console.log(`📊 Full AI Breakdown:`, atsBreakdown);
-          console.log(`💡 Full AI Suggestions:`, atsSuggestions?.length || 0);
-          console.log(`🎯 Full AI Key Points:`, keyPoints?.length || 0);
-          
-          // TODO: Send WebSocket update to client when full analysis is ready
-          // For now, client will need to refresh to see full results
-          
-        } catch (error) {
-          console.error('❌ Full AI analysis failed:', error);
-          // Keep fast analysis results, don't fail the request
-        }
-      })();
+      console.log(`✅ AI ATS Analysis Complete - Score: ${atsScore}`);
+      console.log(`📊 AI Breakdown:`, atsBreakdown);
+      console.log(`💡 AI Suggestions:`, atsSuggestions?.length || 0);
       
-      // Step 3: Start content improvement in background (non-blocking)
-      console.log(`🔄 Starting content improvement in background...`);
-      const contentImprovementPromise = (async () => {
-        try {
-          // Check if we're in production mode - disable content improvement for speed
-          const isProduction = process.env.NODE_ENV === 'production';
-          if (isProduction) {
-            console.log(`🚀 Production mode detected - skipping content improvement for faster response`);
-            return;
-          }
-          
-          // Generate improved content for each line (limit to prevent rate limiting)
-          const lines = cleanedText.split('\n');
-          const linesToImprove = lines
-            .filter((line, index) => line && line.trim().length > 15 && index < 5) // Reduced to 5 lines
-            .slice(0, 1); // Reduced to 1 line for faster response
-          
-          console.log(`[Content Improvement] Attempting to improve ${linesToImprove.length} lines`);
-          
-          for (let i = 0; i < linesToImprove.length; i++) {
-            const line = linesToImprove[i];
-            if (!line) continue; // Skip if line is undefined
-            
-            const lineIndex = lines.indexOf(line);
-            
-            if (line.trim().length > 15) {
-              try {
-                // Reduced delay for production
-                if (i > 0) {
-                  await new Promise(resolve => setTimeout(resolve, 1000)); // Reduced to 1 second
-                }
-                
-                const improved = await Promise.race([
-                  improveContent(line, 'general'),
-                  new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Content improvement timeout')), 15000) // Reduced to 15 seconds
-                  )
-                ]);
-                
-                if ((improved as any).improvedText && (improved as any).improvedText !== line) {
-                  improvedContent[lineIndex] = (improved as any).improvedText;
-                  console.log(`[Line ${lineIndex}] Content improved successfully`);
-                }
-              } catch (error) {
-                console.log(`[Line ${lineIndex}] Improvement failed:`, error);
-                // Continue with other lines even if one fails
-              }
-            }
-          }
-          
-          console.log(`✅ Content improvement completed. Improved Lines: ${Object.keys(improvedContent).length}`);
-          
-        } catch (error) {
-          console.error('❌ Content improvement failed:', error);
-          // Keep existing content, don't fail the request
-        }
-      })();
+      // Step 2: Extract key points using AI
+      console.log(`🎯 Extracting key points with AI...`);
+      try {
+        keyPoints = await extractKeyPoints(cleanedText);
+        console.log(`✅ Key points extracted: ${keyPoints.length}`);
+      } catch (error) {
+        console.error('❌ Key points extraction failed:', error);
+        keyPoints = [];
+      }
       
-      // Don't await either promise - let them run in background
-      // fullAnalysisPromise.catch(console.error);
-      // contentImprovementPromise.catch(console.error);
+      // Step 3: Generate line-by-line suggestions using AI model
+      console.log(`🔄 Generating line-by-line suggestions with AI...`);
+      try {
+        improvedContent = await generateLineByLineSuggestions(resumeLines, cleanedText);
+        console.log(`✅ Line-by-line suggestions generated for ${Object.keys(improvedContent).length} lines`);
+      } catch (error) {
+        console.error('❌ Line-by-line suggestions failed:', error);
+        improvedContent = {};
+      }
       
-      console.log(`✅ Fast analysis completed. ATS Score: ${atsScore}, Key Points: ${keyPoints.length}, Job Profiles: ${jobProfiles.length}`);
-      console.log(`🔄 Full AI analysis and content improvement running in background...`);
+      isFullAnalysisComplete = true;
       
-      // Clear the global timeout since we have fast results
-      clearTimeout(globalTimeout);
+      console.log(`✅ Full AI Analysis Complete - Score: ${atsScore}, Key Points: ${keyPoints.length}, Job Profiles: ${jobProfiles.length}, Line Suggestions: ${Object.keys(improvedContent).length}`);
       
     } catch (aiError) {
       console.error('❌ AI analysis failed:', aiError);
       
-      // Clear the global timeout
-      clearTimeout(globalTimeout);
-      
-      // Use fallback scoring instead of throwing error
-      console.log('🔄 Using fallback scoring...');
-      try {
-        // Import the fallback function
-        const { calculateFallbackATSScore } = require('../lib/ai');
-        const fallbackResult = calculateFallbackATSScore(cleanedText);
-        
-        // Type assertion for fallback result
-        const typedResult = fallbackResult as {
-          score: number;
-          breakdown: Record<string, number>;
-          suggestions: Array<{ category: string; issue: string; suggestion: string; impact: number }>;
-          keyPoints?: string[];
-          jobProfiles?: Array<{ title: string; matchScore: number; reasoning: string }>;
-        };
-        
-        atsScore = typedResult.score || 50;
-        atsBreakdown = typedResult.breakdown || {
-          keywords: 50,
-          formatting: 50,
-          experience: 50,
-          skills: 50,
-          achievements: 50,
-          contactInfo: 50,
-          certifications: 0,
-          languages: 0,
-          projects: 0,
-          volunteerWork: 0
-        };
-        atsSuggestions = typedResult.suggestions || [];
-        keyPoints = typedResult.keyPoints || [];
-        jobProfiles = typedResult.jobProfiles || [];
-        
-        console.log(`✅ Fallback scoring completed. Score: ${atsScore}`);
-      } catch (fallbackError) {
-        console.error('❌ Fallback scoring also failed:', fallbackError);
-        
-        // Provide basic scoring as last resort
-        atsScore = 50;
-        atsBreakdown = {
-          keywords: 50,
-          formatting: 50,
-          experience: 50,
-          skills: 50,
-          achievements: 50,
-          contactInfo: 50,
-          certifications: 0,
-          languages: 0,
-          projects: 0,
-          volunteerWork: 0
-        };
-        atsSuggestions = [{
-          category: 'general',
-          issue: 'Analysis system unavailable',
-          suggestion: 'Please try again later or contact support',
-          impact: 5
-        }];
-        keyPoints = ['Resume uploaded successfully', 'Basic analysis completed'];
-        jobProfiles = [];
-        
-        console.log('⚠️ Using emergency fallback scoring');
+      // Check if error indicates server/model is offline
+      const errorMessage = aiError instanceof Error ? aiError.message : 'Unknown error';
+      if (errorMessage.includes('offline') || errorMessage.includes('not configured') || errorMessage.includes('API key')) {
+        serverStatus = 'offline';
+        console.error('🚨 Server status: OFFLINE - AI service not available');
+        return res.status(503).json({ 
+          success: false,
+          error: 'AI service is not available. Server status: offline',
+          details: 'The AI model service is currently unavailable. Please check your server configuration and ensure GROQ_API_KEY is set correctly.',
+          serverStatus: 'offline',
+          suggestion: 'Please verify that your AI service is configured and the server is online.'
+        });
       }
+      
+      // For other errors, return error response
+      return res.status(500).json({
+        success: false,
+        error: errorMessage || 'AI analysis failed',
+        details: 'Failed to analyze resume with AI. Please try again later.',
+        serverStatus: 'error'
+      });
     }
     
     console.log(`📤 Sending response to client...`);
     
-    // Validate and ensure we have valid ATS scores
-    if (typeof atsScore !== 'number' || isNaN(atsScore)) {
-      console.warn('⚠️ Invalid ATS score detected, using fallback');
-      atsScore = 50;
+    // Validate AI analysis results (should all be present if we got here)
+    if (typeof atsScore !== 'number' || isNaN(atsScore) || !atsBreakdown || !atsSuggestions) {
+      console.error('⚠️ Invalid AI analysis results');
+      return res.status(500).json({
+        success: false,
+        error: 'AI analysis returned invalid results',
+        details: 'The AI model returned incomplete analysis. Please try again.',
+        serverStatus: 'error'
+      });
     }
     
-    if (!atsBreakdown || typeof atsBreakdown !== 'object') {
-      console.warn('⚠️ Invalid ATS breakdown detected, using fallback');
-      atsBreakdown = {
-        keywords: 50, formatting: 50, experience: 50, skills: 50, achievements: 50,
-        contactInfo: 50, certifications: 0, languages: 0, projects: 0, volunteerWork: 0
-      };
-    }
-    
-    if (!Array.isArray(atsSuggestions)) {
-      console.warn('⚠️ Invalid ATS suggestions detected, using fallback');
-      atsSuggestions = [{
-        category: 'general',
-        issue: 'Analysis in progress',
-        suggestion: 'Please wait while we complete the full analysis',
-        impact: 5
-      }];
-    }
-    
-    if (!Array.isArray(keyPoints)) {
-      console.warn('⚠️ Invalid key points detected, using fallback');
-      keyPoints = ['Resume uploaded successfully', 'Basic analysis completed'];
-    }
-    
-    if (!Array.isArray(jobProfiles)) {
-      console.warn('⚠️ Invalid job profiles detected, using fallback');
-      jobProfiles = [];
-    }
+    // Convert line-by-line suggestions to the format expected by frontend
+    const improvedContentFormatted: Record<string, string> = {};
+    Object.entries(improvedContent).forEach(([lineIndex, data]) => {
+      improvedContentFormatted[lineIndex] = data.improvedText;
+    });
     
     // Log the final response data for debugging
     console.log(`📊 Final Response Data:`, {
@@ -421,9 +287,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       improvedContent: Object.keys(improvedContent).length,
       jobProfiles: jobProfiles?.length || 0,
       analysisStatus: isFullAnalysisComplete ? 'complete' : 'partial',
-      analysisNote: isFullAnalysisComplete 
-        ? 'Full AI analysis completed' 
-        : 'Fast analysis completed. Full AI analysis running in background. Refresh to see complete results.'
+      serverStatus
     });
     
     res.json({
@@ -437,17 +301,20 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       atsBreakdown,
       atsSuggestions,
       keyPoints,
-      improvedContent,
+      improvedContent: improvedContentFormatted,
+      lineByLineSuggestions: improvedContent, // Include full line-by-line data
       jobProfiles,
-      message: 'File uploaded and processed successfully',
+      message: 'File uploaded and processed successfully with AI analysis',
       analysisStatus: isFullAnalysisComplete ? 'complete' : 'partial',
       analysisNote: isFullAnalysisComplete 
-        ? 'Full AI analysis completed' 
-        : 'Full AI analysis running in background. Refresh to see complete results.',
+        ? 'Full AI analysis completed successfully' 
+        : 'AI analysis in progress',
+      serverStatus: serverStatus,
       processingDetails: {
         charactersExtracted: cleanedText.length,
         linesExtracted: cleanedText.split('\n').length,
-        processingTime: 0 // Will be calculated properly in future versions
+        linesWithSuggestions: Object.keys(improvedContent).length,
+        processingTime: 0
       }
     });
 

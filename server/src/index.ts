@@ -18,6 +18,11 @@ console.log('ENABLE_CONTENT_IMPROVEMENT:', process.env.ENABLE_CONTENT_IMPROVEMEN
 console.log('ENABLE_CHAT_ASSISTANT:', process.env.ENABLE_CHAT_ASSISTANT);
 console.log('ENABLE_JOB_SEARCH:', process.env.ENABLE_JOB_SEARCH);
 console.log('GMAIL_APP_PASSWORD:', process.env.GMAIL_APP_PASSWORD ? '***SET***' : 'NOT SET');
+console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? 
+  `${process.env.GROQ_API_KEY.substring(0, 10)}...${process.env.GROQ_API_KEY.substring(process.env.GROQ_API_KEY.length - 10)} (SET)` : 
+  'NOT SET');
+console.log('AI_MODEL:', process.env.AI_MODEL || 'llama-3.1-8b-instant (default)');
+console.log('AI_PROVIDER:', process.env.AI_PROVIDER || 'groq (default)');
 console.log('===================================');
 
 // CORS configuration with multiple origins support

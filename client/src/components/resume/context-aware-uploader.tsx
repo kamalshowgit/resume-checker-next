@@ -371,10 +371,42 @@ const ContextAwareUploader: React.FC = () => {
       }, 200);
 
       // Upload file
-      const response = await apiService.analyzeResume(formData);
+      let response;
+      try {
+        response = await apiService.analyzeResume(formData);
+      } catch (error) {
+        // Clear progress interval on error
+        clearInterval(progressInterval);
+        throw error;
+      }
 
       // Clear progress interval
       clearInterval(progressInterval);
+      
+      // Check if server is offline
+      if (!response.success && (response.error?.includes('offline') || response.serverStatus === 'offline')) {
+        setUploadState({
+          isUploading: false,
+          progress: 0,
+          error: 'Server status: offline - AI service is not available. Please check your server configuration.',
+          success: false,
+        });
+        updateUploadStep('ai-analysis', 'failed');
+        return;
+      }
+      
+      // Check for other errors
+      if (!response.success) {
+        const errorMessage = response.error || response.details || 'Failed to analyze resume';
+        setUploadState({
+          isUploading: false,
+          progress: 0,
+          error: errorMessage,
+          success: false,
+        });
+        updateUploadStep('ai-analysis', 'failed');
+        return;
+      }
 
       // Step 5: Content Improvement
       updateUploadStep('ai-analysis', 'completed');
@@ -396,15 +428,17 @@ const ContextAwareUploader: React.FC = () => {
       //   note: response.analysisNote || ''
       // });
 
-      // Update context with new resume data
-      if (response.success) {
+        // Update context with new resume data
+      if (response.success && response.serverStatus !== 'offline') {
         // Debug logging to see what we're receiving
         console.log('📊 Response received:', {
           atsScore: response.atsScore,
           atsBreakdown: response.atsBreakdown,
           atsSuggestions: response.atsSuggestions,
           keyPoints: response.keyPoints,
-          content: response.content?.substring(0, 100) + '...'
+          lineByLineSuggestions: response.lineByLineSuggestions,
+          content: response.content?.substring(0, 100) + '...',
+          serverStatus: response.serverStatus
         });
 
         // Ensure we have valid ATS scores
@@ -429,6 +463,18 @@ const ContextAwareUploader: React.FC = () => {
         console.log('🎯 Mapped section scores:', sectionScores);
         console.log('📈 Overall ATS score:', overallScore);
 
+        // Prepare line-by-line suggestions data
+        const lineByLineData: Record<string, { improvedText: string; suggestions: string[]; explanation: string }> = {};
+        if (response.lineByLineSuggestions) {
+          Object.entries(response.lineByLineSuggestions).forEach(([lineIndex, data]: [string, any]) => {
+            lineByLineData[lineIndex] = {
+              improvedText: data.improvedText || '',
+              suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
+              explanation: data.explanation || ''
+            };
+          });
+        }
+        
         actions.uploadResume({
           text: response.content || '',
           keyPoints: response.keyPoints || [],
@@ -436,13 +482,16 @@ const ContextAwareUploader: React.FC = () => {
             overallScore,
             sectionScores,
             suggestions: mapSuggestions(response.atsSuggestions),
-            improvedContent: response.improvedContent,
+            improvedContent: response.improvedContent || {},
+            lineByLineSuggestions: lineByLineData,
             jobProfiles: response.jobProfiles || [],
           },
           atsScore: overallScore,
           resumeId: response.resumeId || '',
           filename: file.name,
           lastModified: new Date(),
+          analysisStatus: response.analysisStatus || 'complete',
+          analysisNote: response.analysisNote || '',
         });
 
         // Track successful upload
@@ -599,12 +648,30 @@ const ContextAwareUploader: React.FC = () => {
         )}
 
         {uploadState.error && (
-          <div className="mt-4 rounded-md bg-red-50 p-3 dark:bg-red-900/20">
-            <div className="flex">
-              <FiAlertCircle className="h-5 w-5 text-red-400" />
-              <p className="ml-2 text-sm text-red-700 dark:text-red-200">
-                {uploadState.error}
-              </p>
+          <div className="mt-4 rounded-md bg-red-50 p-4 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <div className="flex items-start">
+              <FiAlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
+              <div className="ml-3 flex-1">
+                <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 mb-1">
+                  {uploadState.error.includes('offline') ? 'Server Status: Offline' : 'Upload Failed'}
+                </h3>
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  {uploadState.error}
+                </p>
+                {uploadState.error.includes('offline') && (
+                  <div className="mt-3 p-3 bg-red-100 dark:bg-red-900/30 rounded border border-red-200 dark:border-red-700">
+                    <p className="text-xs text-red-800 dark:text-red-200 font-medium mb-1">
+                      Troubleshooting Steps:
+                    </p>
+                    <ul className="text-xs text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                      <li>Check if the AI service (Groq) API key is configured correctly</li>
+                      <li>Verify that GROQ_API_KEY is set in your server environment variables</li>
+                      <li>Ensure the server is running and accessible</li>
+                      <li>Check server logs for detailed error information</li>
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

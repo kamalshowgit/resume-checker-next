@@ -35,6 +35,11 @@ export interface ResumeData {
     improvedContent?: {
       [key: string]: string;
     };
+    lineByLineSuggestions?: Record<string, {
+      improvedText: string;
+      suggestions: string[];
+      explanation: string;
+    }>;
     jobProfiles?: Array<{
       title: string;
       matchScore: number;

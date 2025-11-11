@@ -16,9 +16,9 @@ export function logAIConfiguration() {
   });
   
   console.log('\n=== FEATURE CONFIGURATIONS (All default to Groq) ===');
-  console.log(`Resume Analysis: ${process.env.AI_PROVIDER_RESUME || process.env.AI_PROVIDER || 'groq'} / ${process.env.AI_MODEL_RESUME || process.env.AI_MODEL || 'llama3-8b-8192'}`);
-  console.log(`Chat Assistant: ${process.env.AI_PROVIDER_CHAT || process.env.AI_PROVIDER || 'groq'} / ${process.env.AI_MODEL_CHAT || process.env.AI_MODEL || 'llama3-8b-8192'}`);
-  console.log(`Job Search: ${process.env.AI_PROVIDER_JOBSEARCH || process.env.AI_PROVIDER || 'groq'} / ${process.env.AI_MODEL_JOBSEARCH || process.env.AI_MODEL || 'llama3-8b-8192'}`);
+  console.log(`Resume Analysis: ${process.env.AI_PROVIDER_RESUME || process.env.AI_PROVIDER || 'groq'} / ${process.env.AI_MODEL_RESUME || process.env.AI_MODEL || 'llama-3.1-8b-instant'}`);
+  console.log(`Chat Assistant: ${process.env.AI_PROVIDER_CHAT || process.env.AI_PROVIDER || 'groq'} / ${process.env.AI_MODEL_CHAT || process.env.AI_MODEL || 'llama-3.1-8b-instant'}`);
+  console.log(`Job Search: ${process.env.AI_PROVIDER_JOBSEARCH || process.env.AI_PROVIDER || 'groq'} / ${process.env.AI_MODEL_JOBSEARCH || process.env.AI_MODEL || 'llama-3.1-8b-instant'}`);
   console.log('================================\n');
 }
 
@@ -63,10 +63,16 @@ function getOpenAICompatibleConfig(provider: string | undefined) {
     
     // default groq
     default:
+      const groqKey = process.env.GROQ_API_KEY;
+      if (!groqKey || groqKey === 'your_groq_api_key_here') {
+        console.warn('⚠️ WARNING: GROQ_API_KEY is not set or is using placeholder value');
+      } else {
+        console.log(`✅ GROQ_API_KEY loaded: ${groqKey.substring(0, 10)}...${groqKey.substring(groqKey.length - 10)}`);
+      }
       return { 
         base: 'https://api.groq.com/openai/v1', 
-        key: process.env.GROQ_API_KEY,
-        defaultModel: 'llama3-8b-8192'
+        key: groqKey,
+        defaultModel: 'llama-3.1-8b-instant'
       };
   }
 }
@@ -82,9 +88,22 @@ export async function extractKeyPoints(text: string): Promise<string[]> {
   console.log(`[KeyPoints] API key present: ${!!key}`);
 
   // If no API key configured, throw error - no fallback allowed
-  if (!key || key === 'your_groq_api_key_here') {
-    throw new Error('No valid API key configured for AI service. Please set GROQ_API_KEY in your environment variables.');
+  if (!key || key === 'your_groq_api_key_here' || key === 'your_actual_groq_api_key_here') {
+    console.error('❌ [KeyPoints] GROQ_API_KEY is missing or invalid');
+    console.error('   Expected: gsk_... format');
+    console.error('   Current value:', key ? `${key.substring(0, 10)}... (${key.length} chars)` : 'NOT SET');
+    throw new Error('No valid API key configured for AI service. Please set GROQ_API_KEY in your .env file.');
   }
+  
+  // Verify the API key format (should start with gsk_)
+  if (!key.startsWith('gsk_')) {
+    console.error('❌ [KeyPoints] GROQ_API_KEY format is invalid (should start with gsk_)');
+    console.error('   Current value:', `${key.substring(0, 10)}...`);
+    throw new Error('Invalid GROQ_API_KEY format. API key should start with "gsk_". Please check your .env file.');
+  }
+  
+  // Log that we're using the API key (first few and last few chars for security)
+  console.log(`✅ [KeyPoints] Using GROQ_API_KEY: ${key.substring(0, 10)}...${key.substring(key.length - 10)}`);
 
   // If configured and key present, use LLM to extract bullets
   if (key && model) {
@@ -270,9 +289,21 @@ export async function chatSuggest(
 
   console.log(`[Chat] Using provider: ${provider}, model: ${model}, base: ${base}`);
 
-  if (!key) {
-    throw new Error('No valid API key configured for AI service. Please set GROQ_API_KEY in your environment variables.');
+  if (!key || key === 'your_groq_api_key_here' || key === 'your_actual_groq_api_key_here') {
+    console.error('❌ [Chat] GROQ_API_KEY is missing or invalid');
+    console.error('   Expected: gsk_... format');
+    console.error('   Current value:', key ? `${key.substring(0, 10)}... (${key.length} chars)` : 'NOT SET');
+    throw new Error('No valid API key configured for AI service. Please set GROQ_API_KEY in your .env file.');
   }
+  
+  // Verify the API key format (should start with gsk_)
+  if (!key.startsWith('gsk_')) {
+    console.error('❌ [Chat] GROQ_API_KEY format is invalid (should start with gsk_)');
+    console.error('   Current value:', `${key.substring(0, 10)}...`);
+    throw new Error('Invalid GROQ_API_KEY format. API key should start with "gsk_". Please check your .env file.');
+  }
+  
+  console.log(`✅ [Chat] Using GROQ_API_KEY: ${key.substring(0, 10)}...${key.substring(key.length - 10)}`);
 
   try {
     const requestBody = {
@@ -443,9 +474,21 @@ export async function calculateATSScore(text: string): Promise<{
   console.log(`[ATS Score] API key present: ${!!key}`);
 
   if (!key || key === 'your_groq_api_key_here' || key === 'your_actual_groq_api_key_here') {
-    console.error('[ATS Score] No valid API key configured');
-    throw new Error('No valid API key configured for AI service. Please set GROQ_API_KEY in your environment variables.');
+    console.error('❌ [ATS Score] GROQ_API_KEY is missing or invalid');
+    console.error('   Expected: gsk_... format');
+    console.error('   Current value:', key ? `${key.substring(0, 10)}... (${key.length} chars)` : 'NOT SET');
+    throw new Error('AI service is not configured. Server status: offline. Please set GROQ_API_KEY in your .env file.');
   }
+  
+  // Verify the API key format (should start with gsk_)
+  if (!key.startsWith('gsk_')) {
+    console.error('❌ [ATS Score] GROQ_API_KEY format is invalid (should start with gsk_)');
+    console.error('   Current value:', `${key.substring(0, 10)}...`);
+    throw new Error('Invalid GROQ_API_KEY format. API key should start with "gsk_". Please check your .env file.');
+  }
+  
+  // Log that we're using the API key
+  console.log(`✅ [ATS Score] Using GROQ_API_KEY: ${key.substring(0, 10)}...${key.substring(key.length - 10)}`);
 
   try {
     // Detect which sections actually exist in the resume
@@ -632,16 +675,19 @@ IMPORTANT:
   } catch (error) {
     console.error('[ATS Score] Error:', error);
     
-    // Fallback to rule-based scoring if AI fails
-    console.log('[ATS Score] AI analysis failed, using fallback scoring...');
-    try {
-      const fallbackResult = calculateFallbackATSScore(text);
-      console.log('[ATS Score] Fallback scoring completed successfully');
-      return fallbackResult;
-    } catch (fallbackError) {
-      console.error('[ATS Score] Fallback scoring also failed:', fallbackError);
-      throw new Error('Both AI and fallback scoring failed. Please try again.');
+    // DO NOT use fallback - only use AI model
+    // If AI fails, throw error to indicate server/model is offline
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('API key') || errorMessage.includes('offline') || errorMessage.includes('not configured')) {
+      throw new Error('AI service is not configured. Server status: offline');
     }
+    if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+      throw new Error('AI service rate limit reached. Please try again later.');
+    }
+    if (errorMessage.includes('decommissioned') || errorMessage.includes('model')) {
+      throw new Error('AI model is not available. Server status: offline. Please contact support.');
+    }
+    throw new Error(`AI service error: ${errorMessage}. Server status may be offline.`);
   }
 }
 
@@ -657,13 +703,21 @@ export async function improveContent(text: string, category: string, userInput?:
   const model = process.env.AI_MODEL_RESUME || process.env.AI_MODEL || config.defaultModel;
   const { base, key } = config;
 
-  if (!key) {
-    return {
-      improvedText: text,
-      explanation: 'AI improvement unavailable - no API key configured',
-      newScore: 0
-    };
+  if (!key || key === 'your_groq_api_key_here' || key === 'your_actual_groq_api_key_here') {
+    console.error('❌ [Improve Content] GROQ_API_KEY is missing or invalid');
+    console.error('   Expected: gsk_... format');
+    console.error('   Current value:', key ? `${key.substring(0, 10)}... (${key.length} chars)` : 'NOT SET');
+    throw new Error('AI service is not configured. Please set GROQ_API_KEY in your .env file.');
   }
+  
+  // Verify the API key format (should start with gsk_)
+  if (!key.startsWith('gsk_')) {
+    console.error('❌ [Improve Content] GROQ_API_KEY format is invalid (should start with gsk_)');
+    console.error('   Current value:', `${key.substring(0, 10)}...`);
+    throw new Error('Invalid GROQ_API_KEY format. API key should start with "gsk_". Please check your .env file.');
+  }
+  
+  console.log(`✅ [Improve Content] Using GROQ_API_KEY: ${key.substring(0, 10)}...${key.substring(key.length - 10)}`);
 
   try {
     const prompt = `Improve this resume content for the category: ${category}
@@ -704,7 +758,9 @@ IMPORTANT: Ensure the response is valid JSON without any control characters or f
       if (resp.status === 429) {
         throw new Error('AI service rate limit reached. Please try again later.');
       }
-      throw new Error(`AI service error: ${resp.status}`);
+      const errorText = await resp.text();
+      console.error(`[Improve Content] API Error ${resp.status}: ${errorText}`);
+      throw new Error(`AI service error: ${resp.status} - Server may be offline or model unavailable`);
     }
 
     const data: any = await resp.json();
@@ -739,6 +795,155 @@ IMPORTANT: Ensure the response is valid JSON without any control characters or f
   } catch (error) {
     console.error('[Improve Content] Error:', error);
     throw error; // Re-throw the error instead of falling back
+  }
+}
+
+// Generate line-by-line suggestions for resume content
+export async function generateLineByLineSuggestions(
+  resumeLines: string[],
+  resumeContext: string
+): Promise<Record<number, { improvedText: string; suggestions: string[]; explanation: string }>> {
+  const provider = process.env.AI_PROVIDER_RESUME || process.env.AI_PROVIDER || 'groq';
+  const config = getOpenAICompatibleConfig(provider);
+  const model = process.env.AI_MODEL_RESUME || process.env.AI_MODEL || config.defaultModel;
+  const { base, key } = config;
+
+  if (!key || key === 'your_groq_api_key_here' || key === 'your_actual_groq_api_key_here') {
+    console.error('❌ [Line-by-Line] GROQ_API_KEY is missing or invalid');
+    console.error('   Expected: gsk_... format');
+    console.error('   Current value:', key ? `${key.substring(0, 10)}... (${key.length} chars)` : 'NOT SET');
+    throw new Error('AI service is not configured. Server status: offline. Please set GROQ_API_KEY in your .env file.');
+  }
+  
+  // Verify the API key format (should start with gsk_)
+  if (!key.startsWith('gsk_')) {
+    console.error('❌ [Line-by-Line] GROQ_API_KEY format is invalid (should start with gsk_)');
+    console.error('   Current value:', `${key.substring(0, 10)}...`);
+    throw new Error('Invalid GROQ_API_KEY format. API key should start with "gsk_". Please check your .env file.');
+  }
+  
+  console.log(`✅ [Line-by-Line] Using GROQ_API_KEY: ${key.substring(0, 10)}...${key.substring(key.length - 10)}`);
+
+  const results: Record<number, { improvedText: string; suggestions: string[]; explanation: string }> = {};
+
+  try {
+    // Filter out empty lines but keep original indices for proper mapping
+    const meaningfulLines = resumeLines
+      .map((line, originalIndex) => ({ 
+        line: line.trim(), 
+        originalIndex, 
+        isEmpty: line.trim().length === 0 || line.trim().length < 5
+      }))
+      .filter(({ isEmpty }) => !isEmpty)
+      .slice(0, 50); // Limit to first 50 meaningful lines to avoid rate limits
+
+    console.log(`[Line-by-Line] Processing ${meaningfulLines.length} meaningful lines from ${resumeLines.length} total lines with AI model: ${model}`);
+
+    // Process lines in batches to avoid rate limits
+    const batchSize = 5;
+    for (let i = 0; i < meaningfulLines.length; i += batchSize) {
+      const batch = meaningfulLines.slice(i, i + batchSize);
+      
+      await Promise.all(
+        batch.map(async ({ line, originalIndex }) => {
+          try {
+            const prompt = `Analyze this resume line and provide improvements:
+
+Resume Line ${originalIndex + 1}:
+"${line}"
+
+Full Resume Context (for reference):
+${resumeContext.substring(0, 2000)}
+
+Provide:
+1. An improved version of this line (more impactful, ATS-optimized)
+2. 2-3 specific suggestions for improvement
+3. A brief explanation of why these changes matter
+
+Response format (JSON only):
+{
+  "improvedText": "improved version of the line",
+  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
+  "explanation": "brief explanation of improvements"
+}
+
+IMPORTANT: Return ONLY valid JSON, no additional text.`;
+
+            const requestBody = {
+              model,
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a resume optimization expert. Provide concise, actionable improvements for resume lines. Always respond with valid JSON only.'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.3,
+              max_tokens: 400
+            };
+
+            const resp = await fetch(`${base}/chat/completions`, {
+              method: 'POST',
+              headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+              body: JSON.stringify(requestBody)
+            });
+
+            if (!resp.ok) {
+              const errorText = await resp.text();
+              console.error(`[Line-by-Line] API Error for line ${originalIndex}: ${resp.status} - ${errorText}`);
+              if (resp.status === 429) {
+                throw new Error('AI service rate limit reached');
+              }
+              throw new Error(`AI service error: ${resp.status}`);
+            }
+
+            const data: any = await resp.json();
+            const content = data?.choices?.[0]?.message?.content;
+            
+            if (content) {
+              try {
+                // Extract JSON from response
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                  const result = JSON.parse(jsonMatch[0]);
+                  if (result.improvedText && result.suggestions && Array.isArray(result.suggestions)) {
+                    // Use originalIndex to map back to the correct line in the resume
+                    results[originalIndex] = {
+                      improvedText: result.improvedText,
+                      suggestions: result.suggestions,
+                      explanation: result.explanation || 'AI-generated improvement for better ATS optimization and impact.'
+                    };
+                    console.log(`[Line-by-Line] Generated suggestions for line ${originalIndex + 1}`);
+                  }
+                }
+              } catch (parseError) {
+                console.error(`[Line-by-Line] Failed to parse response for line ${originalIndex}:`, parseError);
+              }
+            }
+
+            // Small delay to avoid rate limits
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (error) {
+            console.error(`[Line-by-Line] Error processing line ${originalIndex}:`, error);
+            // Continue with other lines even if one fails
+          }
+        })
+      );
+
+      // Delay between batches
+      if (i + batchSize < meaningfulLines.length) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    console.log(`[Line-by-Line] Generated suggestions for ${Object.keys(results).length} lines`);
+    return results;
+  } catch (error) {
+    console.error('[Line-by-Line] Error:', error);
+    throw error;
   }
 }
 

@@ -87,15 +87,26 @@ export function ServerStatus() {
       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Server Status:</span>
       <div className={`flex items-center space-x-1 px-2 py-1 rounded text-xs font-medium ${getStatusColor()}`}>
         <span>{getStatusIcon()}</span>
-        <span className="capitalize">{serverStatus.status}</span>
+        <span className="capitalize">
+          {serverStatus.status === 'offline' && serverStatus.error?.includes('AI service') 
+            ? 'AI Offline' 
+            : serverStatus.status}
+        </span>
       </div>
       {serverStatus.status === 'offline' && (
-        <button
-          onClick={checkServerStatus}
-          className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-        >
-          Retry
-        </button>
+        <>
+          <button
+            onClick={checkServerStatus}
+            className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+          >
+            Retry
+          </button>
+          {serverStatus.error?.includes('AI service') && (
+            <span className="text-xs text-red-600 dark:text-red-400" title={serverStatus.error}>
+              (AI service unavailable)
+            </span>
+          )}
+        </>
       )}
       <span className="text-xs text-gray-500 dark:text-gray-400">
         {formatTime(serverStatus.timestamp)}

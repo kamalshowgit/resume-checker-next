@@ -49,28 +49,46 @@ interface ResumeAnalysisProps {
 export function ResumeAnalysis({ analysisResults, resumeText, onContentUpdate, analysisStatus, analysisNote }: ResumeAnalysisProps) {
   const [activeTab, setActiveTab] = useState<"score" | "content">("score");
   const [editContent, setEditContent] = useState("");
-  const [resumeLines, setResumeLines] = useState<string[]>(resumeText.split("\n"));
+  // Parse resume text into lines, preserving empty lines for proper line number mapping
+  const [resumeLines, setResumeLines] = useState<string[]>(resumeText.split("\n").map(line => line.trim() || ''));
   
   // Update resume lines when text changes
   React.useEffect(() => {
-    setResumeLines(resumeText.split("\n"));
+    // Split by newlines and preserve all lines (including empty ones) for proper indexing
+    const lines = resumeText.split("\n").map(line => line.trim() || '');
+    setResumeLines(lines);
   }, [resumeText]);
   
   // Get suggestions for each line from the AI response
-  const getSuggestionForLine = (lineIndex: number, lineContent: string): string[] | null => {
-    // Check if we have an AI-generated suggestion for this line
-    if (analysisResults.improvedContent && analysisResults.improvedContent[lineIndex]) {
-      const suggestion = analysisResults.improvedContent[lineIndex];
-      // If it's a string, convert to array; if it's already an array, use as is
-      return Array.isArray(suggestion) ? suggestion : [suggestion];
+  const getSuggestionForLine = (lineIndex: number, lineContent: string): { suggestions: string[]; improvedText?: string; explanation?: string } | null => {
+    // Check if we have line-by-line AI suggestions
+    const lineByLineData = (analysisResults as any).lineByLineSuggestions;
+    if (lineByLineData && lineByLineData[lineIndex.toString()]) {
+      const lineData = lineByLineData[lineIndex.toString()];
+      return {
+        suggestions: Array.isArray(lineData.suggestions) ? lineData.suggestions : [],
+        improvedText: lineData.improvedText,
+        explanation: lineData.explanation
+      };
     }
     
-    // Grammar and content improvement suggestions
+    // Check if we have an AI-generated improved content for this line
+    if (analysisResults.improvedContent && analysisResults.improvedContent[lineIndex.toString()]) {
+      const improvedText = analysisResults.improvedContent[lineIndex.toString()];
+      return {
+        suggestions: [improvedText],
+        improvedText: improvedText
+      };
+    }
+    
+    // Fallback to basic suggestions (keep existing logic for compatibility)
+    
+    // Basic grammar and content improvement suggestions (fallback only)
     const suggestions: string[] = [];
     
     // Grammar checks
     if (lineContent.includes("i ") && !lineContent.includes("I ")) {
-      suggestions.push("Capitalize &apos;I&apos; when referring to yourself");
+      suggestions.push("Capitalize 'I' when referring to yourself");
     }
     if (lineContent.includes("  ")) {
       suggestions.push("Remove extra spaces");
@@ -81,13 +99,13 @@ export function ResumeAnalysis({ analysisResults, resumeText, onContentUpdate, a
     
     // Content improvement suggestions
     if (lineContent.includes("Manager") || lineContent.includes("manager")) {
-      suggestions.push("Led cross-functional team of 5 engineers, resulting in 30% increase in product delivery speed.");
+      suggestions.push("Use stronger action verbs and quantify achievements");
     }
     if (lineContent.includes("Developed") || lineContent.includes("developed")) {
-      suggestions.push("Engineered scalable solutions that reduced system latency by 45% and increased user retention by 22%.");
+      suggestions.push("Add specific metrics to show impact (e.g., 'reduced latency by 45%')");
     }
     if (lineContent.includes("Skills") || lineContent.includes("skills")) {
-      suggestions.push("Expert in React, TypeScript, Node.js, AWS, CI/CD, and performance optimization.");
+      suggestions.push("List specific technical skills relevant to your target role");
     }
     
     // Quantification suggestions
@@ -97,12 +115,16 @@ export function ResumeAnalysis({ analysisResults, resumeText, onContentUpdate, a
       }
     }
     
-    return suggestions.length > 0 ? suggestions : null;
+    return suggestions.length > 0 ? { suggestions } : null;
   };
 
   // Check if a line has improvements
   const hasImprovement = (lineIndex: number) => {
-    return analysisResults.improvedContent && analysisResults.improvedContent[lineIndex];
+    const lineByLineData = (analysisResults as any).lineByLineSuggestions;
+    if (lineByLineData && lineByLineData[lineIndex.toString()]) {
+      return true;
+    }
+    return analysisResults.improvedContent && analysisResults.improvedContent[lineIndex.toString()];
   };
 
   // Download report function
@@ -587,8 +609,9 @@ Generated on: ${new Date().toLocaleString()}
                   <div className="max-h-[800px] overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
                     <div className="space-y-6">
                       {resumeLines.map((line, index) => {
-                        const suggestions = getSuggestionForLine(index, line);
+                        const lineSuggestions = getSuggestionForLine(index, line);
                         const hasImprovements = hasImprovement(index);
+                        const lineByLineData = (analysisResults as any).lineByLineSuggestions?.[index.toString()];
                         
                         return (
                           <div key={index} className="group">
@@ -596,7 +619,7 @@ Generated on: ${new Date().toLocaleString()}
                             <div className={`rounded-lg border-2 transition-all duration-200 ${
                               hasImprovements
                                 ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200 dark:from-yellow-900/20 dark:to-amber-900/20 dark:border-yellow-700'
-                                : suggestions
+                                : lineSuggestions
                                 ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 dark:from-blue-900/20 dark:to-indigo-900/20 dark:border-blue-700'
                                 : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                             }`}>
@@ -612,7 +635,7 @@ Generated on: ${new Date().toLocaleString()}
                                       AI Enhanced
                                     </span>
                                   )}
-                                  {suggestions && !hasImprovements && (
+                                  {lineSuggestions && !hasImprovements && (
                                     <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                                       Suggestions Available
                                     </span>
@@ -626,19 +649,19 @@ Generated on: ${new Date().toLocaleString()}
                                   Original Content
                                 </h4>
                                 <div className="text-gray-900 dark:text-white font-medium leading-relaxed">
-                                  {line}
+                                  {line || '(Empty line)'}
                                 </div>
                               </div>
                               
-                              {/* AI Suggestions */}
-                              {suggestions && (
+                              {/* AI Suggestions from line-by-line analysis */}
+                              {lineSuggestions && lineSuggestions.suggestions && lineSuggestions.suggestions.length > 0 && (
                                 <div className="px-4 pb-4">
                                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
                                     <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center">
                                       AI Suggestions & Why They Matter
                                     </h4>
                                     <div className="space-y-3">
-                                      {suggestions.map((suggestion, suggestionIndex) => (
+                                      {lineSuggestions.suggestions.map((suggestion, suggestionIndex) => (
                                         <div key={suggestionIndex} className="rounded-lg p-3">
                                           <div className="flex items-start space-x-2">
                                             <span className="text-blue-500 dark:text-blue-400 text-lg">•</span>
@@ -646,9 +669,11 @@ Generated on: ${new Date().toLocaleString()}
                                               <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
                                                 {suggestion}
                                               </p>
-                                              <p className="text-xs text-blue-700 dark:text-blue-400">
-                                                This improvement will enhance clarity, professionalism, and ATS compatibility.
-                                              </p>
+                                              {lineSuggestions.explanation && (
+                                                <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
+                                                  {lineSuggestions.explanation}
+                                                </p>
+                                              )}
                                             </div>
                                           </div>
                                         </div>
@@ -659,20 +684,22 @@ Generated on: ${new Date().toLocaleString()}
                               )}
                               
                               {/* AI Improved Version */}
-                              {hasImprovements && (
+                              {hasImprovements && (lineSuggestions?.improvedText || analysisResults.improvedContent?.[index.toString()]) && (
                                 <div className="px-4 pb-4">
                                   <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700">
                                     <h4 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-3 flex items-center">
-                                      AI Enhanced Version
+                                      ✨ AI Enhanced Version
                                     </h4>
-                                    <div className="rounded-lg p-3">
+                                    <div className="rounded-lg p-3 bg-white dark:bg-gray-800">
                                       <p className="text-sm text-yellow-900 dark:text-yellow-200 font-medium">
-                                        {analysisResults.improvedContent?.[index]}
+                                        {lineSuggestions?.improvedText || analysisResults.improvedContent?.[index.toString()]}
                                       </p>
                                     </div>
-                                    <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2">
-                                      This enhanced version improves clarity, impact, and ATS optimization.
-                                    </p>
+                                    {(lineSuggestions?.explanation || lineByLineData?.explanation) && (
+                                      <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2">
+                                        {lineSuggestions?.explanation || lineByLineData?.explanation}
+                                      </p>
+                                    )}
                                   </div>
                                 </div>
                               )}

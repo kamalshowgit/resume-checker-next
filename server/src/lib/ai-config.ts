@@ -67,9 +67,9 @@ export class AIConfigManager {
   }
 
   private initializeModels() {
-    // Groq Models
-    this.models.set('llama3-8b-8192', {
-      name: 'llama3-8b-8192',
+    // Groq Models - Updated to use current available models
+    this.models.set('llama-3.1-8b-instant', {
+      name: 'llama-3.1-8b-instant',
       provider: 'groq',
       baseUrl: 'https://api.groq.com/openai/v1',
       apiKey: process.env.GROQ_API_KEY || '',
@@ -80,8 +80,8 @@ export class AIConfigManager {
       quality: 'good'
     });
 
-    this.models.set('llama3-70b-8192', {
-      name: 'llama3-70b-8192',
+    this.models.set('llama-3.3-70b-versatile', {
+      name: 'llama-3.3-70b-versatile',
       provider: 'groq',
       baseUrl: 'https://api.groq.com/openai/v1',
       apiKey: process.env.GROQ_API_KEY || '',
@@ -92,8 +92,8 @@ export class AIConfigManager {
       quality: 'excellent'
     });
 
-    this.models.set('mixtral-8x7b-32768', {
-      name: 'mixtral-8x7b-32768',
+    this.models.set('meta-llama/llama-4-maverick-17b-128e-instruct', {
+      name: 'meta-llama/llama-4-maverick-17b-128e-instruct',
       provider: 'groq',
       baseUrl: 'https://api.groq.com/openai/v1',
       apiKey: process.env.GROQ_API_KEY || '',
@@ -290,7 +290,7 @@ export class AIConfigManager {
   public getModelForFeature(featureName: string): string {
     this.ensureInitialized();
     const envKey = `AI_MODEL_${featureName.toUpperCase()}`;
-    return process.env[envKey] || process.env.AI_MODEL || 'llama3-8b-8192';
+    return process.env[envKey] || process.env.AI_MODEL || 'llama-3.1-8b-instant';
   }
 
   public getProviderForFeature(featureName: string): string {

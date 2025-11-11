@@ -14,9 +14,11 @@
    code .env
    ```
 
-3. **Set your Groq API key:**
+3. **Set your Groq API key and model:**
    ```env
    GROQ_API_KEY=gsk_your_actual_api_key_here
+   AI_MODEL=llama-3.1-8b-instant
+   AI_PROVIDER=groq
    ```
 
 4. **Restart your server:**
@@ -35,17 +37,17 @@ AI_PROVIDER=groq
 GROQ_API_KEY=gsk_your_api_key_here
 
 # Default model for all functions
-AI_MODEL=llama3-8b-8192
+AI_MODEL=llama-3.1-8b-instant
 ```
 
 ### Function-Specific Models (Optional)
 ```env
 # Override models for specific functions
-AI_MODEL_RESUME=llama3-70b-8192      # Better quality for resume analysis
-AI_MODEL_CHAT=llama3-8b-8192         # Faster for chat responses
-AI_MODEL_ATS=llama3-70b-8192         # Better for ATS scoring
-AI_MODEL_IMPROVEMENT=llama3-70b-8192 # Better for content improvement
-AI_MODEL_JOBSEARCH=llama3-8b-8192    # Faster for job search
+AI_MODEL_RESUME=llama-3.3-70b-versatile      # Better quality for resume analysis
+AI_MODEL_CHAT=llama-3.1-8b-instant           # Faster for chat responses
+AI_MODEL_ATS=llama-3.3-70b-versatile         # Better for ATS scoring
+AI_MODEL_IMPROVEMENT=llama-3.3-70b-versatile # Better for content improvement
+AI_MODEL_JOBSEARCH=llama-3.1-8b-instant      # Faster for job search
 ```
 
 ### Alternative AI Providers

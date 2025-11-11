@@ -14,6 +14,11 @@ export interface ResumeAnalysisResponse {
   atsSuggestions?: Record<string, unknown>;
   keyPoints?: string[];
   improvedContent?: Record<string, string>;
+  lineByLineSuggestions?: Record<string, {
+    improvedText: string;
+    suggestions: string[];
+    explanation: string;
+  }>;
   jobProfiles?: Array<{
     title: string;
     matchScore: number;
@@ -22,8 +27,10 @@ export interface ResumeAnalysisResponse {
   message?: string;
   processingDetails?: Record<string, unknown>;
   error?: string;
+  details?: string;
   analysisStatus?: 'partial' | 'complete';
   analysisNote?: string;
+  serverStatus?: 'online' | 'offline' | 'error';
 }
 
 
@@ -230,10 +237,25 @@ class APIService {
     } catch (error: unknown) {
       console.error('Resume analysis failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to analyze resume';
-      const responseError = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      const axiosError = error as { response?: { data?: { error?: string; details?: string; serverStatus?: string } }; status?: number };
+      const responseError = axiosError?.response?.data?.error;
+      const serverStatus = axiosError?.response?.data?.serverStatus;
+      
+      // Check if server is offline
+      if (axiosError?.status === 503 || serverStatus === 'offline' || errorMessage.includes('offline')) {
+        return {
+          success: false,
+          error: responseError || 'AI service is not available. Server status: offline',
+          details: axiosError?.response?.data?.details || 'The AI model service is currently unavailable.',
+          serverStatus: 'offline',
+        };
+      }
+      
       return {
         success: false,
         error: responseError || errorMessage,
+        details: axiosError?.response?.data?.details,
+        serverStatus: serverStatus || 'error',
       };
     }
   }
@@ -280,12 +302,33 @@ class APIService {
     }
   }
 
-  // Get server status
+  // Get server status - also check AI service availability
   async getServerStatus(): Promise<ServerStatusResponse> {
-    // Always check real server status - no mock data
-    
     try {
-      await this.api.get('/health');
+      // Check basic server health
+      const healthResponse = await this.api.get('/health');
+      
+      // Also check AI service status
+      try {
+        const aiHealthResponse = await this.api.get('/api/resume/health');
+        const aiStatus = aiHealthResponse.data?.services?.ai;
+        if (aiStatus === 'not_configured' || aiStatus === 'error') {
+          return {
+            status: 'offline',
+            timestamp: new Date().toISOString(),
+            error: 'AI service is not configured or unavailable. Server status: offline',
+          };
+        }
+      } catch (aiError) {
+        console.warn('AI health check failed:', aiError);
+        // If AI health check fails, server might be offline or AI not configured
+        return {
+          status: 'offline',
+          timestamp: new Date().toISOString(),
+          error: 'AI service health check failed. Server status may be offline',
+        };
+      }
+      
       return {
         status: 'online',
         timestamp: new Date().toISOString(),
