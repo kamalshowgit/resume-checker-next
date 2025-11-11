@@ -1,7 +1,9 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { getApiUrl, isProductionConfigured } from '../config';
 
-// API Response types
+// =====================
+// API Response Types
+// =====================
 export interface ResumeAnalysisResponse {
   success: boolean;
   resumeId?: string;
@@ -14,11 +16,14 @@ export interface ResumeAnalysisResponse {
   atsSuggestions?: Record<string, unknown>;
   keyPoints?: string[];
   improvedContent?: Record<string, string>;
-  lineByLineSuggestions?: Record<string, {
-    improvedText: string;
-    suggestions: string[];
-    explanation: string;
-  }>;
+  lineByLineSuggestions?: Record<
+    string,
+    {
+      improvedText: string;
+      suggestions: string[];
+      explanation: string;
+    }
+  >;
   jobProfiles?: Array<{
     title: string;
     matchScore: number;
@@ -32,8 +37,6 @@ export interface ResumeAnalysisResponse {
   analysisNote?: string;
   serverStatus?: 'online' | 'offline' | 'error';
 }
-
-
 
 export interface ChatResponse {
   success: boolean;
@@ -102,7 +105,6 @@ export interface AdminStatsResponse {
   userRole: string;
 }
 
-
 export interface DatabaseBackupResponse {
   success: boolean;
   data: {
@@ -113,31 +115,32 @@ export interface DatabaseBackupResponse {
   };
 }
 
-// API Service class
+// =====================
+// API Service Class
+// =====================
 class APIService {
   private api: AxiosInstance;
   private baseURL: string;
 
   constructor() {
     this.baseURL = getApiUrl();
-    
-    // Log configuration status
+
     if (!isProductionConfigured()) {
-      console.warn('⚠️  Production URLs not configured. Please set NEXT_PUBLIC_API_URL and NEXT_PUBLIC_APP_URL environment variables.');
+      console.warn('⚠️ Production URLs not configured. Please set NEXT_PUBLIC_API_URL and NEXT_PUBLIC_APP_URL.');
       console.warn('Current API URL:', this.baseURL);
     } else {
       console.log('✅ Production configuration detected. API URL:', this.baseURL);
     }
-    
+
     this.api = axios.create({
       baseURL: this.baseURL,
-      timeout: 45000, // Reduced from 60s to 45s for better UX
+      timeout: 45000,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    // Add request interceptor for logging
+    // Request interceptor
     this.api.interceptors.request.use(
       (config) => {
         console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
@@ -149,7 +152,7 @@ class APIService {
       }
     );
 
-    // Add response interceptor for logging
+    // Response interceptor
     this.api.interceptors.response.use(
       (response) => {
         console.log(`API Response: ${response.status} ${response.config.url}`);
@@ -162,7 +165,9 @@ class APIService {
     );
   }
 
-  // Health check
+  // =====================
+  // Health Check
+  // =====================
   async healthCheck(): Promise<boolean> {
     try {
       const response = await this.api.get('/health');
@@ -173,284 +178,158 @@ class APIService {
     }
   }
 
-  // Resume analysis
+  // =====================
+  // Resume Analysis
+  // =====================
   async analyzeResume(formData: FormData): Promise<ResumeAnalysisResponse> {
     try {
-      console.log('Analyzing resume with file:', formData.get('file'));
-      
-      // Check if file exists in formData
       const file = formData.get('file');
       if (!file) {
-        console.error('No file found in formData');
-        return {
-          success: false,
-          error: 'No file provided for analysis'
-        };
+        return { success: false, error: 'No file provided for analysis' };
       }
-      
-      // Log the file details
-      if (file instanceof File) {
-        console.log('File details:', {
-          name: file.name,
-          type: file.type,
-          size: file.size
-        });
-      }
-      
-      // Check server endpoint URL - the server route is '/upload' under the resume router
-      // The full path is /api/resume/upload on the server
+
       const uploadEndpoint = '/api/resume/upload';
       console.log(`Sending request to: ${this.baseURL}${uploadEndpoint}`);
-      
-      try {
-        const response: AxiosResponse<ResumeAnalysisResponse> = await this.api.post(
-          uploadEndpoint,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            timeout: 45000, // Reduced from 60s to 45s for better UX
-          }
-        );
-        
-        console.log('Server response:', response.data);
-        
-        // If we get here, server responded but we might still have an error in the response
-        if (!response.data.success) {
-          console.error('Server returned error:', response.data.error);
-          return {
-            success: false,
-            error: response.data.error || 'Server returned an error'
-          };
-        }
-        
-        return response.data;
-      } catch (uploadError) {
-        console.error('Upload request failed:', uploadError);
-        
-        // Don't use mock data anymore, let the error propagate
-        console.error('Server error occurred during file upload');
-        
-        throw uploadError; // Re-throw to be handled by outer catch
+
+      const response: AxiosResponse<ResumeAnalysisResponse> = await this.api.post(uploadEndpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 45000,
+      });
+
+      if (!response.data.success) {
+        return { success: false, error: response.data.error || 'Server returned an error' };
       }
-    } catch (error: unknown) {
+
+      return response.data;
+    } catch (error: any) {
       console.error('Resume analysis failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to analyze resume';
-      const axiosError = error as { response?: { data?: { error?: string; details?: string; serverStatus?: string } }; status?: number };
-      const responseError = axiosError?.response?.data?.error;
-      const serverStatus = axiosError?.response?.data?.serverStatus;
-      
-      // Check if server is offline
-      if (axiosError?.status === 503 || serverStatus === 'offline' || errorMessage.includes('offline')) {
-        return {
-          success: false,
-          error: responseError || 'AI service is not available. Server status: offline',
-          details: axiosError?.response?.data?.details || 'The AI model service is currently unavailable.',
-          serverStatus: 'offline',
-        };
-      }
-      
+
+      const validStatuses = ['online', 'offline', 'error'] as const;
+      const rawStatus = error?.response?.data?.serverStatus;
+      const serverStatus: 'online' | 'offline' | 'error' =
+        error?.response?.status === 503
+          ? 'offline'
+          : validStatuses.includes(rawStatus)
+          ? (rawStatus as 'online' | 'offline' | 'error')
+          : 'error';
+
       return {
         success: false,
-        error: responseError || errorMessage,
-        details: axiosError?.response?.data?.details,
-        serverStatus: serverStatus || 'error',
+        error: error?.response?.data?.error || error.message || 'Failed to analyze resume',
+        details: error?.response?.data?.details,
+        serverStatus,
       };
     }
   }
 
+  // =====================
   // Chat with AI
+  // =====================
   async chatWithAI(query: string, resumeData?: Record<string, unknown>): Promise<ChatResponse> {
     try {
-      // Prepare the request data with context
       const requestData = {
         message: query,
         history: (resumeData?.history as Array<{ role: string; content: string }>) || [],
-        context: resumeData?.context || {}
+        context: resumeData?.context || {},
       };
-      
-      // Log the request for debugging
-      console.log('Chat request:', { 
-        query, 
-        historyLength: requestData.history.length,
-        hasResumeData: !!resumeData?.resumeData
-      });
-      
-      // Always use real AI - no mock data fallback
-      console.log('Using real AI chat service');
-      
+
       const response: AxiosResponse<ChatResponse> = await this.api.post('/api/resume/chat', requestData);
-      
-      // Transform backend response to match frontend interface
+
       return {
         success: true,
         response: response.data.reply || response.data.response || 'No response received',
       };
-    } catch (error: unknown) {
-      console.error('Chat failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to get chat response';
-      const responseError = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      
-      // Never use mock data - always require real AI responses
-      console.log('Chat service failed - no mock data fallback');
-      
+    } catch (error: any) {
       return {
         success: false,
-        error: responseError || errorMessage,
+        error: error?.response?.data?.error || error.message || 'Chat request failed',
       };
     }
   }
 
-  // Get server status - also check AI service availability
+  // =====================
+  // Server Status
+  // =====================
   async getServerStatus(): Promise<ServerStatusResponse> {
     try {
-      // Check basic server health
-      const healthResponse = await this.api.get('/health');
-      
-      // Also check AI service status
-      try {
-        const aiHealthResponse = await this.api.get('/api/resume/health');
-        const aiStatus = aiHealthResponse.data?.services?.ai;
-        if (aiStatus === 'not_configured' || aiStatus === 'error') {
-          return {
-            status: 'offline',
-            timestamp: new Date().toISOString(),
-            error: 'AI service is not configured or unavailable. Server status: offline',
-          };
-        }
-      } catch (aiError) {
-        console.warn('AI health check failed:', aiError);
-        // If AI health check fails, server might be offline or AI not configured
-        return {
-          status: 'offline',
-          timestamp: new Date().toISOString(),
-          error: 'AI service health check failed. Server status may be offline',
-        };
-      }
-      
-      return {
-        status: 'online',
-        timestamp: new Date().toISOString(),
-      };
-    } catch (error) {
+      await this.api.get('/health');
+      await this.api.get('/api/resume/health');
+      return { status: 'online', timestamp: new Date().toISOString() };
+    } catch (error: any) {
       return {
         status: 'offline',
         timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error.message || 'Server status check failed',
       };
     }
   }
 
-  // Get debug data (public endpoint - no auth required)
+  // =====================
+  // Debug / Admin APIs
+  // =====================
   async getDebugData(): Promise<DebugDataResponse> {
-    try {
-      const response = await this.api.get('/debug-data');
-      return response.data;
-    } catch (error) {
-      console.error('Failed to get debug data:', error);
-      throw error;
-    }
+    const response = await this.api.get('/debug-data');
+    return response.data;
   }
 
-  // Get admin statistics (requires authentication)
   async getAdminStats(apiKey: string): Promise<AdminStatsResponse> {
-    try {
-      const response = await this.api.get('/api/admin/stats', {
-        headers: {
-          'x-demo-key': apiKey
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to get admin stats:', error);
-      throw error;
-    }
+    const response = await this.api.get('/api/admin/stats', {
+      headers: { 'x-demo-key': apiKey },
+    });
+    return response.data;
   }
 
-  // Get database backup (requires authentication)
   async getDatabaseBackup(apiKey: string): Promise<DatabaseBackupResponse> {
-    try {
-      const response = await this.api.get('/api/admin/backup', {
-        headers: {
-          'x-demo-key': apiKey
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to get database backup:', error);
-      throw error;
-    }
+    const response = await this.api.get('/api/admin/backup', {
+      headers: { 'x-demo-key': apiKey },
+    });
+    return response.data;
   }
 
-  // Get database health (requires authentication)
   async getDatabaseHealth(apiKey: string): Promise<any> {
-    try {
-      const response = await this.api.get('/api/admin/db-health', {
-        headers: {
-          'x-demo-key': apiKey
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to get database health:', error);
-      throw error;
-    }
+    const response = await this.api.get('/api/admin/db-health', {
+      headers: { 'x-demo-key': apiKey },
+    });
+    return response.data;
   }
 
-  // SECURE ADMIN METHODS - Require ID/Password authentication
-
-  // Get all data with secure authentication
+  // =====================
+  // Secure Admin Methods
+  // =====================
   async getAllDataSecure(adminId: string, adminPassword: string): Promise<any> {
-    try {
-      const response = await this.api.get('/api/admin/secure/all-data', {
-        headers: {
-          'x-admin-id': adminId,
-          'x-admin-password': adminPassword
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to get all data:', error);
-      throw error;
-    }
+    const response = await this.api.get('/api/admin/secure/all-data', {
+      headers: {
+        'x-admin-id': adminId,
+        'x-admin-password': adminPassword,
+      },
+    });
+    return response.data;
   }
 
-  // Get CSV export with secure authentication
   async exportCSVSecure(adminId: string, adminPassword: string): Promise<Blob> {
-    try {
-      const response = await this.api.get('/api/admin/secure/export-csv', {
-        headers: {
-          'x-admin-id': adminId,
-          'x-admin-password': adminPassword
-        },
-        responseType: 'blob'
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to export CSV:', error);
-      throw error;
-    }
+    const response = await this.api.get('/api/admin/secure/export-csv', {
+      headers: {
+        'x-admin-id': adminId,
+        'x-admin-password': adminPassword,
+      },
+      responseType: 'blob',
+    });
+    return response.data;
   }
 
-  // Get secure statistics
   async getSecureStats(adminId: string, adminPassword: string): Promise<any> {
-    try {
-      const response = await this.api.get('/api/admin/secure/stats', {
-        headers: {
-          'x-admin-id': adminId,
-          'x-admin-password': adminPassword
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to get secure stats:', error);
-      throw error;
-    }
+    const response = await this.api.get('/api/admin/secure/stats', {
+      headers: {
+        'x-admin-id': adminId,
+        'x-admin-password': adminPassword,
+      },
+    });
+    return response.data;
   }
-
 }
 
-// Export singleton instance
+// =====================
+// Export Singleton
+// =====================
 export const apiService = new APIService();
 export default apiService;
